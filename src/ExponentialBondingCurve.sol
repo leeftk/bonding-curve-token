@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 contract ExponentialBondingCurve {
-    uint256 public constant B = 0.000436 * 1e18; // Scaled for Solidity precision
+    uint256 public constant B = 0.000436 * 1e18; // Based on 69,000 market cap
     uint256 public constant MARKET_CAP_LIMIT = 69000 * 1e18; // $69,000 market cap
     uint256 public totalSupply;
     uint256 public totalETH;
@@ -24,7 +24,7 @@ contract ExponentialBondingCurve {
         return exp(B * supply / 1e18);
     }
 
-    // Approximate e^x using Taylor series expansion for small x
+    // Approximate e^x using Taylor series
     function exp(uint256 x) internal pure returns (uint256) {
         uint256 sum = 1e18; // 1 in 18 decimal places
         uint256 term = 1e18; // Current term in series
