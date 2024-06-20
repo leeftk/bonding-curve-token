@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-// solhint-disable-next-line contract-name-camelcase
 contract CrocSwapMock is ERC20 {
     constructor() ERC20("CrocSwap LP Token", "CROCLP") {}
 
@@ -11,7 +10,22 @@ contract CrocSwapMock is ERC20 {
         uint16 callpath,
         bytes memory cmd
     ) public payable returns (bytes memory) {
-        // Mock implementation
+        // Extract base token address and quote token address from cmd
+        (address baseTokenAddress, address quoteTokenAddress) = abi.decode(cmd, (address, address));
+
+        // Wrap base and quote tokens in ERC20 interface
+        ERC20 baseToken = ERC20(baseTokenAddress);
+        ERC20 quoteToken = ERC20(quoteTokenAddress);
+
+        // Transfer base and quote tokens to this contract
+        uint256 baseTokenAmount = baseToken.balanceOf(msg.sender);
+        uint256 quoteTokenAmount = quoteToken.balanceOf(msg.sender);
+
+        require(baseTokenAmount > 0, "Insufficient base token balance");
+        require(quoteTokenAmount > 0, "Insufficient quote token balance");
+
+        baseToken.transferFrom(msg.sender, address(this), baseTokenAmount);
+        quoteToken.transferFrom(msg.sender, address(this), quoteTokenAmount);
 
         // Generate a random number
         uint256 randomNum = uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty))) % 1000;
