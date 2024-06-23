@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
-import "../src/interface/IDexContract.sol";
+import "../src/interfaces/IDexContract.sol";
 
 
 contract UserCmdTest is Test {
