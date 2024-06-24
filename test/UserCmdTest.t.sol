@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
-import "../src/interface/IDexContract.sol";
+import "../src/interfaces/IDexContract.sol";
 import "openzeppelin-contracts/interfaces/IERC20.sol";
 
 import "../src/TokenFactory.sol";
@@ -26,6 +26,7 @@ contract UserCmdTest is Test {
     uint8 constant BASE_SIDE_SETTLE = 0x1; // 00000001
     uint8 constant QUOTE_SIDE_SETTLE = 0x2; // 00000010
     uint16 constant poolInitializingCode  = 1;
+    uint8 addToPoolCode = 3;
 
     address nirlinAddy = 0x1A1da7Be44D477a887341Dc3EBC09A45798c7752;
     address newaddy = makeAddr("33audits");
@@ -58,10 +59,10 @@ contract UserCmdTest is Test {
         // deploy the token
         address doggy2 = TokenFactory(tokenFactory).createNewMeme("Nirlin Token", "NTN");
         console.log("DOGGY: ",doggy2);
-        bytes memory initPoolCmd = abi.encode(initCode, address(0), address(doggy2), uint256(420), sqrtPrice);
-
+        bytes memory initPoolCmd = abi.encode(71, address(0), address(doggy2), uint256(420), sqrtPrice);
+        bytes memory addToPoolCmd = abi.encode(addToPoolCode, address(0), address(doggy2), uint256(420), uint8(0), uint8(0) , uint256(3200), 3232, uint(317107993274930371231744),0, address(0));
         deal(address(doggy2), nirlinAddy, type(uint64).max);
-
+        deal(address(doggy2), newaddy, type(uint64).max);
         vm.prank(0x1A1da7Be44D477a887341Dc3EBC09A45798c7752);
         IERC20(doggy2).approve(address(dex), type(uint64).max);
 
@@ -73,19 +74,40 @@ contract UserCmdTest is Test {
         bytes memory returnData = IDexContract(dex).userCmd{value: 1 ether}(3,initPoolCmd);
 
         console.logBytes(returnData);
+        
                 // IDexContract(dex).userCmd(1, initPoolCmd3);
 
-         deal(address(doggy2), newaddy, type(uint64).max);
-           vm.deal(newaddy, 10000000 ether);
+        //  deal(address(doggy2), newaddy, type(uint64).max);
+        //    vm.deal(newaddy, 10000000 ether);
 
+        // vm.prank(newaddy);
+        // IERC20(doggy2).approve(address(dex), type(uint64).max);
+
+        //  vm.prank(newaddy);
+        // bytes memory returnData2 = IDexContract(dex).userCmd{value: 1 ether}(3,initPoolCmd);
+
+        /// right the funciton of above except with the call from below
+        vm.deal(newaddy, 1000000 ether);
         vm.prank(newaddy);
         IERC20(doggy2).approve(address(dex), type(uint64).max);
+        vm.prank(newaddy);
+        bytes memory returnData3 = IDexContract(dex).userCmd{value: 1 ether}(2, addToPoolCmd);
+        console.logBytes(returnData3);
 
-         vm.prank(newaddy);
-        bytes memory returnData2 = IDexContract(dex).userCmd{value: 1 ether}(3,initPoolCmd);
 
-
-
+//      userCmd(2, abi.encode(
+//     code,         // uint8
+//     base,         // address
+//     quote,        // address
+//     poolIdx,      // uint256
+//     bidTick,      // int24
+//     askTick,      // int24
+//     qty,          // uint128
+//     limitLower,   // uint128
+//     limitHigher,  // uint128
+//     settleFlags,  // uint8
+//     lpConduit     // address
+// ))
 
         
 
