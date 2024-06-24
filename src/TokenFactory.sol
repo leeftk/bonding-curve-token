@@ -9,6 +9,7 @@ error NOT_ENOUGH_FEE_SENT();
 error TRANSFER_FAILED();
 
 // TODO: add a metadata option in the erc20 token implementation so it can be easily fetched into UI when a token is launched
+// TODO: remove the bondicurveContract and introduce a new contract called trading hub, all the tokens will moveinto the trading hub, trading hub exposes the trading functions that interact with the bondingcurve contract. 
 contract TokenFactory is Ownable{
 
     // initially will be deployed with supply of 800 million. 
@@ -22,12 +23,12 @@ contract TokenFactory is Ownable{
 
     // array of all the tokens (might need it and might not)
     address[] public tokens;
-    address public bondingCurveContract;
+    address public tradingHub;
 
 
-    constructor(uint256 newFeeInEth, address newBondingCurveContract, uint256 newSupply) Ownable(msg.sender) {
+    constructor(uint256 newFeeInEth, address newTradingHub, uint256 newSupply) Ownable(msg.sender) {
         feeInEth = newFeeInEth;
-        bondingCurveContract = newBondingCurveContract;
+        tradingHub = newTradingHub;
         supply = newSupply; 
     }
 
@@ -43,7 +44,7 @@ contract TokenFactory is Ownable{
         // we need to send this token to mint 800 million of these tokens and than send them to the bonding curve
         // safe ERC20 is not needed as all the tokens are standard in house implementation.
         // once the tokens are in the bondingcurve contract, anyone can buy and sell them. 
-        IERC20(newToken).transfer(bondingCurveContract, IERC20(newToken).balanceOf(address(this)));
+        IERC20(newToken).transfer(tradingHub, IERC20(newToken).balanceOf(address(this)));
 
         // TODO: after sending in tokens we will need to invoke some function to inform contract about token and set initial states and start trading 
         // TODO : emit the event here maybe
