@@ -5,6 +5,7 @@ import {Ownable} from "openzeppelin-contracts/access/Ownable.sol";
 import "./MemeToken.sol";
 import "openzeppelin-contracts/interfaces/IERC20.sol";
 
+
 error NOT_ENOUGH_FEE_SENT();
 error TRANSFER_FAILED();
 
@@ -19,7 +20,7 @@ contract TokenFactory is Ownable{
     uint256 public feeInEth;
 
     // keep track of which creator created which token.
-    mapping(address creator => address token) creatorToToken;
+    mapping(address token => address creator) public tokenToCreator;
 
     // array of all the tokens (might need it and might not)
     address[] public tokens;
@@ -45,6 +46,8 @@ contract TokenFactory is Ownable{
         // safe ERC20 is not needed as all the tokens are standard in house implementation.
         // once the tokens are in the bondingcurve contract, anyone can buy and sell them. 
         IERC20(newToken).transfer(tradingHub, IERC20(newToken).balanceOf(address(this)));
+
+        tokenToCreator[address(newToken)] = msg.sender;
 
         // TODO: after sending in tokens we will need to invoke some function to inform contract about token and set initial states and start trading 
         // TODO : emit the event here maybe

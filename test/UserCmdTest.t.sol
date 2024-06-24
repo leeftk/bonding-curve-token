@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
+<<<<<<< HEAD
 import "../src/interface/IDexContract.sol";
 import "openzeppelin-contracts/interfaces/IERC20.sol";
 import "../src/TokenFactory.sol";
@@ -11,6 +12,9 @@ interface ITokenFactory {
         function createNewMeme(string memory tokenName, string memory symbol) external  payable returns(address);
 
 }
+=======
+import "../src/interfaces/IDexContract.sol";
+>>>>>>> b4937ab (added pyth oracles, token eth tracking and checks that only factory deployed tokens can be traded)
 
 
 contract UserCmdTest is Test {
