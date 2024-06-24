@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import "../src/interface/IDexContract.sol";
 import "openzeppelin-contracts/interfaces/IERC20.sol";
 import "../src/TokenFactory.sol";
@@ -23,6 +24,18 @@ import "../src/interface/IDexContract.sol";
 import "openzeppelin-contracts/interfaces/IERC20.sol";
 >>>>>>> c980b1f (brain fried)
 >>>>>>> d3bc0f9 (merge conflict fix)
+=======
+import "../src/interface/IDexContract.sol";
+import "openzeppelin-contracts/interfaces/IERC20.sol";
+
+import "../src/TokenFactory.sol";
+
+
+interface ITokenFactory {
+        function createNewMeme(string memory tokenName, string memory symbol) external  payable returns(address);
+
+}
+>>>>>>> 35cc663 (merge conflicts)
 
 
 contract UserCmdTest is Test {
@@ -40,21 +53,32 @@ contract UserCmdTest is Test {
 
     address nirlinAddy = 0x1A1da7Be44D477a887341Dc3EBC09A45798c7752;
 <<<<<<< HEAD
+<<<<<<< HEAD
     address newaddy = makeAddr("33audits");
 
     TokenFactory tokenFactory;
 =======
 >>>>>>> d3bc0f9 (merge conflict fix)
+=======
+    address newaddy = makeAddr("33audits");
+
+    TokenFactory tokenFactory;
+>>>>>>> 35cc663 (merge conflicts)
 
     function setUp() public {
         vm.createSelectFork("https://eth-mainnet.g.alchemy.com/v2/miIScEoe9D6YBuuUrayW6tN7oecsWApe"); // Fork Mainnet for Ambient Finance at the latest block
         dex = IDexContract(0xAaAaAAAaA24eEeb8d57D431224f73832bC34f688); // Use the deployed contract address
         // hotPath = IDexContract(0x8DE058ec8F64B60431EB9AAee95C7266d0d5C311);
 <<<<<<< HEAD
+<<<<<<< HEAD
         tokenFactory = new TokenFactory(0,0x1A1da7Be44D477a887341Dc3EBC09A45798c7752, 800000 ether);
 
 =======
 >>>>>>> d3bc0f9 (merge conflict fix)
+=======
+        tokenFactory = new TokenFactory(0,0x1A1da7Be44D477a887341Dc3EBC09A45798c7752, 800000 ether);
+
+>>>>>>> 35cc663 (merge conflicts)
     }
 
     function toSqrtPrice(uint256 price) internal pure returns (uint128) {
@@ -71,6 +95,7 @@ contract UserCmdTest is Test {
     }
 
     function testUserCmd() public {
+<<<<<<< HEAD
 <<<<<<< HEAD
 
         // deploy the token
@@ -106,21 +131,44 @@ contract UserCmdTest is Test {
 
 =======
         bytes memory initPoolCmd = abi.encode(initCode, address(0), address(doggy), uint256(420), sqrtPrice);
+=======
+>>>>>>> 35cc663 (merge conflicts)
 
-        deal(address(doggy), nirlinAddy, type(uint256).max);
-        
+        // deploy the token
+        address doggy2 = TokenFactory(tokenFactory).createNewMeme("Nirlin Token", "NTN");
+        console.log("DOGGY: ",doggy2);
+        bytes memory initPoolCmd = abi.encode(initCode, address(0), address(doggy2), uint256(420), sqrtPrice);
+
+        deal(address(doggy2), nirlinAddy, type(uint64).max);
+
         vm.prank(0x1A1da7Be44D477a887341Dc3EBC09A45798c7752);
-        IERC20(doggy).approve(address(dex), type(uint256).max);
+        IERC20(doggy2).approve(address(dex), type(uint64).max);
 
-        vm.deal(0x1A1da7Be44D477a887341Dc3EBC09A45798c7752, 10000 ether);
 
-    
+        vm.deal(0x1A1da7Be44D477a887341Dc3EBC09A45798c7752, 10000000 ether);
+
 
          vm.prank(0x1A1da7Be44D477a887341Dc3EBC09A45798c7752);
-        IDexContract(dex).userCmd{value: 1 ether}(poolInitializingCode,initPoolCmd);
+        bytes memory returnData = IDexContract(dex).userCmd{value: 1 ether}(3,initPoolCmd);
+
+        console.logBytes(returnData);
                 // IDexContract(dex).userCmd(1, initPoolCmd3);
 
+<<<<<<< HEAD
 >>>>>>> d3bc0f9 (merge conflict fix)
+=======
+         deal(address(doggy2), newaddy, type(uint64).max);
+           vm.deal(newaddy, 10000000 ether);
+
+        vm.prank(newaddy);
+        IERC20(doggy2).approve(address(dex), type(uint64).max);
+
+         vm.prank(newaddy);
+        bytes memory returnData2 = IDexContract(dex).userCmd{value: 1 ether}(3,initPoolCmd);
+
+
+
+>>>>>>> 35cc663 (merge conflicts)
 
         
 
