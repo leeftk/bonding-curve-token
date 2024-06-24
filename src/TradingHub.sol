@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
+
 import {Ownable} from "openzeppelin-contracts/access/Ownable.sol";
 import "openzeppelin-contracts/interfaces/IERC20.sol";
 import "./interfaces/IExponentialBondingCurve.sol";
 import "./interfaces/ITokenFactory.sol";
 import "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
-
+import "forge-std/console.sol";
 
 error NOT_ENOUGH_AMOUNT_OUT();
 error NOT_ENOUGH_BALANCE_IN_CONTRACT();
@@ -34,28 +35,32 @@ contract TradingHub is Ownable {
 
     mapping(address token => uint256 currentMarketCapEther) public tokenMarketCap;
 
-    constructor(address newBondingCurve, address newTokenFactory, address newethUsdPriceFeed, uint256 newMigrationUsdValue ) Ownable(msg.sender) {
+    constructor(
+        address newBondingCurve,
+        address pythContractAddress,
+        uint256 newMigrationUsdValue
+    ) Ownable(msg.sender) {
         bondingCurve = newBondingCurve;
-        tokenFactory = newTokenFactory;
-        ethUsdPriceFeed = IPyth(newethUsdPriceFeed);
+        ethUsdPriceFeed = IPyth(pythContractAddress);
         migrationUsdValue = newMigrationUsdValue;
     }
 
-
     // priceUpdate will come from the frontend, using the pyth network sdk
-    function buy(address token, uint256 minimumAmountOut, address receiver, bytes[] calldata priceUpdate) public payable returns(uint256) {
+    function buy(address token, uint256 minimumAmountOut, address receiver, bytes[] calldata priceUpdate)
+        public
+        payable
+        returns (uint256)
+    {
+        // if (ITokenFactory(tokenFactory).tokenToCreator(token) == address(0)) {
+        //     revert WTF_IS_THIS_TOKEN();
+        // }
+        console.log("made it here");
 
-        if(ITokenFactory(tokenFactory).tokenToCreator(token) == address(0)) {
-            revert WTF_IS_THIS_TOKEN();
-        }
-
-
-        if(IERC20(token).balanceOf(address(this)) < minimumAmountOut) {
+        if (IERC20(token).balanceOf(address(this)) < minimumAmountOut) {
             revert NOT_ENOUGH_BALANCE_IN_CONTRACT();
         }
 
-        if(address(token) == address(0) || receiver == address(0))
-        {
+        if (address(token) == address(0) || receiver == address(0)) {
             revert INVALID_ARGS();
         }
         // call the relevant function on the bonding curve
@@ -64,19 +69,18 @@ contract TradingHub is Ownable {
         // send tokens to the caller
         IERC20(token).transfer(receiver, amountOut);
 
-
-        if(amountOut < minimumAmountOut) {
+        if (amountOut < minimumAmountOut) {
             revert NOT_ENOUGH_AMOUNT_OUT();
         }
 
-         uint256 tokenCap = tokenMarketCap[token];
+        uint256 tokenCap = tokenMarketCap[token];
         tokenCap = tokenCap + msg.value;
 
         tokenMarketCap[token] = tokenCap;
 
-        uint fee = ethUsdPriceFeed.getUpdateFee(priceUpdate);
-        ethUsdPriceFeed.updatePriceFeeds{ value: fee }(priceUpdate);
- 
+        uint256 fee = ethUsdPriceFeed.getUpdateFee(priceUpdate);
+        ethUsdPriceFeed.updatePriceFeeds{value: fee}(priceUpdate);
+
         bytes32 priceFeedId = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace; // ETH/USD
 
         // price of 1 eth
@@ -85,36 +89,26 @@ contract TradingHub is Ownable {
         // now based on this price, we need to calculate the worth of eth the flown into certain token
         uint256 tokenUsdWorth = _tokenUsdWorth(price, tokenMarketCap[token]);
 
-        if(tokenUsdWorth >= migrationUsdValue)
-        {
+        if (tokenUsdWorth >= migrationUsdValue) {
             _migrateAndBribe();
         }
 
-
-
         return amountOut;
-
     }
 
-
-
     function sell(address token, address receiver, uint256 amount) public {
-
         // this is necessary otherwise any one can sell any arbitrary token
-          if(ITokenFactory(tokenFactory).tokenToCreator(token) == address(0)) {
+        if (ITokenFactory(tokenFactory).tokenToCreator(token) == address(0)) {
             revert WTF_IS_THIS_TOKEN();
         }
 
-
-         if(address(token) == address(0) || receiver == address(0))
-        {
+        if (address(token) == address(0) || receiver == address(0)) {
             revert INVALID_ARGS();
         }
 
         uint256 amountOut = IExponentialBondingCurve(bondingCurve).curvedBurn(amount, token);
 
-        if(amountOut == 0)
-        {
+        if (amountOut == 0) {
             revert NOT_ENOUGH_AMOUNT_OUT();
         }
 
@@ -126,52 +120,33 @@ contract TradingHub is Ownable {
 
         tokenMarketCap[token] = tokenCap;
 
-        (bool success, ) = address(receiver).call{value: amountOut}("");
-        if(!success)
-        {
+        (bool success,) = address(receiver).call{value: amountOut}("");
+        if (!success) {
             revert TRANSFER_FAILED();
         }
-
-        
     }
 
     // this migraate 8k to ambiant dex, 4k to bribe the validators and rest remains in the bonding curve
-    function _migrateAndBribe() private{
+    function _migrateAndBribe() private {}
 
-    }
-
-    function _tokenUsdWorth(PythStructs.Price memory price, uint256 ethAmount) private returns(uint256)
-    {
-         require(price.price >= 0, "Price must be non-negative");
+    function _tokenUsdWorth(PythStructs.Price memory price, uint256 ethAmount) private returns (uint256) {
+        require(price.price >= 0, "Price must be non-negative");
         return uint256(uint64(price.price)) * ethAmount / 1e18;
     }
 
-    function setBondingCurve(address newBondingCurve) public onlyOwner
-    {
+    function setBondingCurve(address newBondingCurve) public onlyOwner {
         bondingCurve = newBondingCurve;
     }
 
-    function getBondingCurve() public view returns(address) {
+    function getBondingCurve() public view returns (address) {
         return bondingCurve;
-    }
-
-    function setTokenFactory(address newTokenFactory) public onlyOwner 
-    {
-        tokenFactory = newTokenFactory;
-    }
-
-    function getTokenFactory() public view returns(address)
-    {
-        return tokenFactory;
     }
 
     function setEthUsdPriceFeed(address newEthUsdPriceFeed) public onlyOwner {
         ethUsdPriceFeed = IPyth(newEthUsdPriceFeed);
-    } 
-
-    function getEthUsdPriceFeed() public view returns(address) {
-        return address(ethUsdPriceFeed);
     }
 
+    function getEthUsdPriceFeed() public view returns (address) {
+        return address(ethUsdPriceFeed);
+    }
 }
-

@@ -15,7 +15,7 @@ pragma solidity ^0.8.0;
 //     CrocSwapMock crocSwap;
 //     TestERC20 baseToken;
 //     TestERC20 quoteToken;
-    
+
 //     function setUp() public {
 //         baseToken = new TestERC20("Base Token", "BASE");
 //         quoteToken = new TestERC20("Quote Token", "QUOTE");
@@ -58,9 +58,9 @@ pragma solidity ^0.8.0;
 //         console.log("contract",address(this));
 //         console.log("croc",address(crocSwap));
 //         bytes memory data = crocSwap.userCmd{value: 0}(callpath, cmd);
-    
+
 //         console.log("data", abi.decode(data, (uint)));
-        
+
 //         uint256 finalBaseAllowance = baseToken.allowance(address(this), address(crocSwap));
 //         uint256 finalQuoteAllowance = quoteToken.allowance(address(this), address(crocSwap));
 

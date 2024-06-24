@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 interface ITokenFactory {
-
     // View functions
     function feeInEth() external view returns (uint256);
     function supply() external view returns (uint256);
