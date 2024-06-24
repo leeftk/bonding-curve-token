@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 <<<<<<< HEAD
+<<<<<<< HEAD
 import "../src/interface/IDexContract.sol";
 import "openzeppelin-contracts/interfaces/IERC20.sol";
 import "../src/TokenFactory.sol";
@@ -15,6 +16,13 @@ interface ITokenFactory {
 =======
 import "../src/interfaces/IDexContract.sol";
 >>>>>>> b4937ab (added pyth oracles, token eth tracking and checks that only factory deployed tokens can be traded)
+=======
+import "../src/interfaces/IDexContract.sol";
+=======
+import "../src/interface/IDexContract.sol";
+import "openzeppelin-contracts/interfaces/IERC20.sol";
+>>>>>>> c980b1f (brain fried)
+>>>>>>> d3bc0f9 (merge conflict fix)
 
 
 contract UserCmdTest is Test {
@@ -31,16 +39,22 @@ contract UserCmdTest is Test {
     uint16 constant poolInitializingCode  = 1;
 
     address nirlinAddy = 0x1A1da7Be44D477a887341Dc3EBC09A45798c7752;
+<<<<<<< HEAD
     address newaddy = makeAddr("33audits");
 
     TokenFactory tokenFactory;
+=======
+>>>>>>> d3bc0f9 (merge conflict fix)
 
     function setUp() public {
         vm.createSelectFork("https://eth-mainnet.g.alchemy.com/v2/miIScEoe9D6YBuuUrayW6tN7oecsWApe"); // Fork Mainnet for Ambient Finance at the latest block
         dex = IDexContract(0xAaAaAAAaA24eEeb8d57D431224f73832bC34f688); // Use the deployed contract address
         // hotPath = IDexContract(0x8DE058ec8F64B60431EB9AAee95C7266d0d5C311);
+<<<<<<< HEAD
         tokenFactory = new TokenFactory(0,0x1A1da7Be44D477a887341Dc3EBC09A45798c7752, 800000 ether);
 
+=======
+>>>>>>> d3bc0f9 (merge conflict fix)
     }
 
     function toSqrtPrice(uint256 price) internal pure returns (uint128) {
@@ -57,6 +71,7 @@ contract UserCmdTest is Test {
     }
 
     function testUserCmd() public {
+<<<<<<< HEAD
 
         // deploy the token
         address doggy2 = TokenFactory(tokenFactory).createNewMeme("Nirlin Token", "NTN");
@@ -89,6 +104,23 @@ contract UserCmdTest is Test {
 
 
 
+=======
+        bytes memory initPoolCmd = abi.encode(initCode, address(0), address(doggy), uint256(420), sqrtPrice);
+
+        deal(address(doggy), nirlinAddy, type(uint256).max);
+        
+        vm.prank(0x1A1da7Be44D477a887341Dc3EBC09A45798c7752);
+        IERC20(doggy).approve(address(dex), type(uint256).max);
+
+        vm.deal(0x1A1da7Be44D477a887341Dc3EBC09A45798c7752, 10000 ether);
+
+    
+
+         vm.prank(0x1A1da7Be44D477a887341Dc3EBC09A45798c7752);
+        IDexContract(dex).userCmd{value: 1 ether}(poolInitializingCode,initPoolCmd);
+                // IDexContract(dex).userCmd(1, initPoolCmd3);
+
+>>>>>>> d3bc0f9 (merge conflict fix)
 
         
 
