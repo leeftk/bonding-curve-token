@@ -8,37 +8,43 @@ import "./BancorFormula.sol";
 error NOT_TRADING_HUB();
 
 contract ExponentialBondingCurve is BancorFormula, Ownable {
-   
     uint256 public reserveRatio;
     address public tradingHub;
     uint256 public maxGasPrice;
 
-    constructor(
-        uint256 _reserveRatio, address newTradingHub,uint256 newMaxGasPrice
-    ) Ownable(msg.sender) {
+    constructor(uint256 _reserveRatio, address newTradingHub, uint256 newMaxGasPrice) Ownable(msg.sender) {
         reserveRatio = _reserveRatio;
         tradingHub = newTradingHub;
         maxGasPrice = newMaxGasPrice;
     }
 
-    modifier onlyTradingHub {
-        if(msg.sender != tradingHub)
-        {
+    modifier onlyTradingHub() {
+        if (msg.sender != tradingHub) {
             revert NOT_TRADING_HUB();
         }
         _;
     }
 
     function calculateCurvedMintReturn(uint256 _amount, address token)
-        public onlyTradingHub view  returns (uint256 mintAmount)
+        public
+        view
+        onlyTradingHub
+        returns (uint256 mintAmount)
     {
-        return calculatePurchaseReturn(IERC20(token).totalSupply(), IERC20(token).balanceOf(msg.sender), uint32(reserveRatio), _amount);
+        return calculatePurchaseReturn(
+            IERC20(token).totalSupply(), IERC20(token).balanceOf(msg.sender), uint32(reserveRatio), _amount
+        );
     }
 
     function calculateCurvedBurnReturn(uint256 _amount, address token)
-        public onlyTradingHub view  returns (uint256 burnAmount)
+        public
+        view
+        onlyTradingHub
+        returns (uint256 burnAmount)
     {
-        return calculateSaleReturn(IERC20(token).totalSupply(), IERC20(token).balanceOf(msg.sender), uint32(reserveRatio), _amount);
+        return calculateSaleReturn(
+            IERC20(token).totalSupply(), IERC20(token).balanceOf(msg.sender), uint32(reserveRatio), _amount
+        );
     }
 
     modifier validMint(uint256 _amount) {
@@ -52,28 +58,29 @@ contract ExponentialBondingCurve is BancorFormula, Ownable {
         _;
     }
 
-    function curvedMint(uint256 _deposit, address token) 
+    function curvedMint(uint256 _deposit, address token)
+        public
+        view
         validGasPrice
         validMint(_deposit)
         onlyTradingHub
-        public view  returns (uint256)
+        returns (uint256)
     {
         uint256 amount = calculateCurvedMintReturn(_deposit, token);
         return amount;
     }
 
     function curvedBurn(uint256 _amount, address token)
+        public
+        view
         validGasPrice
-        validBurn(_amount,token)
+        validBurn(_amount, token)
         onlyTradingHub
-        public view returns (uint256)
+        returns (uint256)
     {
-        uint256 reimbursement = calculateCurvedBurnReturn(_amount,token);
+        uint256 reimbursement = calculateCurvedBurnReturn(_amount, token);
         return reimbursement;
     }
-
-
-    
 
     modifier validGasPrice() {
         require(
@@ -83,16 +90,12 @@ contract ExponentialBondingCurve is BancorFormula, Ownable {
         _;
     }
 
-    function setMaxGasPrice(uint256 newMax)
-        public
-        onlyOwner
-        returns (bool)
-    {
+    function setMaxGasPrice(uint256 newMax) public onlyOwner returns (bool) {
         maxGasPrice = newMax;
         return true;
     }
 
-    function getMaxGasPrice() public view returns(uint256){
+    function getMaxGasPrice() public view returns (uint256) {
         return maxGasPrice;
     }
 }

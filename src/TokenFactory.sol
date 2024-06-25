@@ -5,15 +5,13 @@ import {Ownable} from "openzeppelin-contracts/access/Ownable.sol";
 import "./MemeToken.sol";
 import "openzeppelin-contracts/interfaces/IERC20.sol";
 
-
 error NOT_ENOUGH_FEE_SENT();
 error TRANSFER_FAIL();
 
 // TODO: add a metadata option in the erc20 token implementation so it can be easily fetched into UI when a token is launched
-// TODO: remove the bondicurveContract and introduce a new contract called trading hub, all the tokens will moveinto the trading hub, trading hub exposes the trading functions that interact with the bondingcurve contract. 
-contract TokenFactory is Ownable{
-
-    // initially will be deployed with supply of 800 million. 
+// TODO: remove the bondicurveContract and introduce a new contract called trading hub, all the tokens will moveinto the trading hub, trading hub exposes the trading functions that interact with the bondingcurve contract.
+contract TokenFactory is Ownable {
+    // initially will be deployed with supply of 800 million.
     uint256 public supply;
 
     // some reasonable fee around $2-3
@@ -26,11 +24,10 @@ contract TokenFactory is Ownable{
     address[] public tokens;
     address public tradingHub;
 
-
     constructor(uint256 newFeeInEth, address newTradingHub, uint256 newSupply) Ownable(msg.sender) {
         feeInEth = newFeeInEth;
         tradingHub = newTradingHub;
-        supply = newSupply; 
+        supply = newSupply;
     }
 
     function createNewMeme(string memory tokenName, string memory symbol) public payable returns (address) {
@@ -43,7 +40,7 @@ contract TokenFactory is Ownable{
 
         // we need to send this token to mint 800 million of these tokens and than send them to the bonding curve
         // safe ERC20 is not needed as all the tokens are standard in house implementation.
-        // once the tokens are in the bondingcurve contract, anyone can buy and sell them. 
+        // once the tokens are in the bondingcurve contract, anyone can buy and sell them.
         IERC20(newToken).transfer(tradingHub, IERC20(newToken).balanceOf(address(this)));
 
         tokenToCreator[address(newToken)] = msg.sender;
