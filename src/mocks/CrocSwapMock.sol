@@ -6,10 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract CrocSwapMock is ERC20 {
     constructor() ERC20("CrocSwap LP Token", "CROCLP") {}
 
-    function userCmd(
-        uint16 callpath,
-        bytes memory cmd
-    ) public payable returns (bytes memory) {
+    function userCmd(uint16 callpath, bytes memory cmd) public payable returns (bytes memory) {
         // Extract base token address and quote token address from cmd
         (address baseTokenAddress, address quoteTokenAddress) = abi.decode(cmd, (address, address));
 

@@ -1,4 +1,3 @@
-
 pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
@@ -128,4 +127,45 @@ contract UserCmdTest is Test {
         // assertEq(dex.someStateVariable(), expectedValue);
     }
 
+    function testCreateSamePoolTwice() public {
+        // deploy the token
+        address doggy2 = TokenFactory(tokenFactory).createNewMeme("Nirlin Token", "NTN");
+        console.log("DOGGY: ", doggy2);
+        bytes memory initPoolCmd = abi.encode(71, address(0), address(doggy2), uint256(420), sqrtPrice);
+        bytes memory addToPoolCmd = abi.encode(
+            addToPoolCode,
+            address(0),
+            address(doggy2),
+            uint256(420),
+            uint8(0),
+            uint8(0),
+            uint256(3200),
+            3232,
+            uint256(317107993274930371231744),
+            0,
+            address(0)
+        );
+        deal(address(doggy2), nirlinAddy, type(uint64).max);
+        deal(address(doggy2), newaddy, type(uint64).max);
+
+        vm.prank(0x1A1da7Be44D477a887341Dc3EBC09A45798c7752);
+        IERC20(doggy2).approve(address(dex), type(uint64).max);
+
+        vm.deal(0x1A1da7Be44D477a887341Dc3EBC09A45798c7752, 10000000 ether);
+
+        vm.prank(0x1A1da7Be44D477a887341Dc3EBC09A45798c7752);
+        bytes memory returnData = IDexContract(dex).userCmd{value: 1 ether}(3, initPoolCmd);
+
+        console.logBytes(returnData);
+
+        deal(address(doggy2), newaddy, type(uint64).max);
+        vm.deal(newaddy, 10000000 ether);
+
+        vm.prank(newaddy);
+        IERC20(doggy2).approve(address(dex), type(uint64).max);
+        //Trying to create a pool with the same token should fail
+        vm.prank(newaddy);
+        vm.expectRevert();
+        bytes memory returnData2 = IDexContract(dex).userCmd{value: 1 ether}(3, initPoolCmd);
+    }
 }

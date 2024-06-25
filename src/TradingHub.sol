@@ -7,7 +7,6 @@ import "./interfaces/ITokenFactory.sol";
 import "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
-
 error NOT_ENOUGH_AMOUNT_OUT();
 error NOT_ENOUGH_BALANCE_IN_CONTRACT();
 error INVALID_ARGS();
@@ -34,9 +33,7 @@ contract TradingHub is Ownable {
 
     mapping(address token => uint256 currentMarketCapEther) public tokenMarketCap;
 
-    constructor(address newBondingCurve, address newTokenFactory, address newethUsdPriceFeed, uint256 newMigrationUsdValue ) Ownable(msg.sender) {
-        bondingCurve = newBondingCurve;
-        tokenFactory = newTokenFactory;
+    constructor(address newethUsdPriceFeed, uint256 newMigrationUsdValue ) Ownable(msg.sender) {
         ethUsdPriceFeed = IPyth(newethUsdPriceFeed);
         migrationUsdValue = newMigrationUsdValue;
     }
