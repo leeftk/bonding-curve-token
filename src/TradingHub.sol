@@ -49,10 +49,10 @@ contract TradingHub is Ownable {
         payable
         returns (uint256)
     {
-        // if (ITokenFactory(tokenFactory).tokenToCreator(token) == address(0)) {
-        //     revert WTF_IS_THIS_TOKEN();
-        // }
-        console.log("made it here");
+        if (ITokenFactory(tokenFactory).tokenToCreator(token) == address(0)) {
+            revert WTF_IS_THIS_TOKEN();
+        }
+ 
 
         if (IERC20(token).balanceOf(address(this)) < minimumAmountOut) {
             revert NOT_ENOUGH_BALANCE_IN_CONTRACT();
@@ -134,7 +134,9 @@ contract TradingHub is Ownable {
         require(price.price >= 0, "Price must be non-negative");
         return uint256(uint64(price.price)) * ethAmount / 1e18;
     }
-
+    function setTokenFactory(address newTokenFactory) public onlyOwner {
+        tokenFactory = newTokenFactory;
+    }
 
     function getBondingCurve() public view returns (address) {
         return bondingCurve;

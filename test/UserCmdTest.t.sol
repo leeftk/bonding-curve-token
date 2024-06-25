@@ -124,6 +124,7 @@ contract UserCmdTest is Test {
         IERC20(doggy2).approve(address(dex), type(uint64).max);
         //Trying to create a pool with the same token should fail
         vm.prank(newaddy);
+        vm.expectRevert();
         bytes memory returnData2 = IDexContract(dex).userCmd{value: 1 ether}(3, initPoolCmd);
     }
 }

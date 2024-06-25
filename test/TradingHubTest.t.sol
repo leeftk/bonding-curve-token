@@ -23,38 +23,11 @@ contract TradingHubTestContract is Test {
         dex = new ExponentialBondingCurve(4, address(tradingHub),1);
         tradingHub.setBondingCurve(address(dex));
         tokenFactory = new TokenFactory(0, address(tradingHub), 69_000 ether);
+        tradingHub.setTokenFactory(address(tokenFactory));
         token = tokenFactory.createNewMeme("New token", "NTN");
     }
 
     function testUserBuy() public {
-        // Preparing price update data
-        
-        // Test this function
-    //     function createPriceFeedUpdateData(
-    //     bytes32 id,
-    //     int64 price,
-    //     uint64 conf,
-    //     int32 expo,
-    //     int64 emaPrice,
-    //     uint64 emaConf,
-    //     uint64 publishTime
-    // ) public pure returns (bytes memory priceFeedData) {
-    //     PythStructs.PriceFeed memory priceFeed;
-
-    //     priceFeed.id = id;
-
-    //     priceFeed.price.price = price;
-    //     priceFeed.price.conf = conf;
-    //     priceFeed.price.expo = expo;
-    //     priceFeed.price.publishTime = publishTime;
-
-    //     priceFeed.emaPrice.price = emaPrice;
-    //     priceFeed.emaPrice.conf = emaConf;
-    //     priceFeed.emaPrice.expo = expo;
-    //     priceFeed.emaPrice.publishTime = publishTime;
-
-    //     priceFeedData = abi.encode(priceFeed);
-    // }
         bytes32 id = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
         int64 price = 1 ether;
         uint64 conf = 1;
@@ -70,7 +43,94 @@ contract TradingHubTestContract is Test {
         pythAddress.updatePriceFeeds{value: requiredFee}(priceUpdate);
         bool success = pythAddress.priceFeedExists(id);
         console.log("Price feed exists: ", success);
-        // Sending 1 ether to the buy function
-        tradingHub.buy{value: 1 ether}(token, 1000, address(this), priceUpdate);
+        
+        tradingHub.buy{value: 1 ether}(address(token), 1000, address(this), priceUpdate);
     }
+
+    function testBuyInvalidArgs() public {
+        bytes[] memory priceUpdate = new bytes[](1);
+        vm.expectRevert();
+        tradingHub.buy{value: 1 ether}(address(0), 1000, address(this), priceUpdate);
+    }
+    function testSellInvalidArgs() public {
+        vm.expectRevert();
+        tradingHub.sell(address(0), address(this), 1000);
+    }
+
+    function testSellNotEnoughAmountOut() public {
+        vm.expectRevert();
+        tradingHub.sell(token, address(this), 1000);
+    }
+
+    function testSetBondingCurve() public {
+        tradingHub.setBondingCurve(address(0x123));
+        assertEq(tradingHub.getBondingCurve(), address(0x123));
+    }
+
+    function testSetAndGetPriceFeed() public {
+        address newPriceFeed = address(0x456);
+        tradingHub.setEthUsdPriceFeed(newPriceFeed);
+        assertEq(tradingHub.getEthUsdPriceFeed(), newPriceFeed);
+    }
+
+   function testUserSell() public {
+        // First, perform a buy operation
+        bytes32 id = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
+        int64 price = 1 ether;
+        uint64 conf = 1;
+        int32 expo = 1;
+        int64 emaPrice = 1 ether;
+        uint64 emaConf = 1;
+        uint64 publishTime = uint64(block.timestamp);
+        uint64 prevPublishTime = uint64(block.timestamp - 1);
+        bytes[] memory priceUpdate = new bytes[](1);
+        
+        priceUpdate[0] = pythAddress.createPriceFeedUpdateData(id, price, conf, expo, emaPrice, emaConf, publishTime, prevPublishTime);
+        uint requiredFee = pythAddress.getUpdateFee(priceUpdate);
+        pythAddress.updatePriceFeeds{value: requiredFee}(priceUpdate);
+
+        uint256 amountOut = tradingHub.buy{value: 1 ether}(token, 1000, address(this), priceUpdate);
+        //check balance of user
+        assertEq(ERC20(token).balanceOf(address(this)), 3999971014888);
+
+        // Approve the TradingHub contract to spend tokens
+        ERC20(token).approve(address(tradingHub), type(uint64).max);
+
+        // Perform sell operation for the same amount
+        tradingHub.sell(token, address(this), 1);
+
+    }
+    function testUserSellMoreThanTheyHave() public {
+        // First, perform a buy operation
+        bytes32 id = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
+        int64 price = 1 ether;
+        uint64 conf = 1;
+        int32 expo = 1;
+        int64 emaPrice = 1 ether;
+        uint64 emaConf = 1;
+        uint64 publishTime = uint64(block.timestamp);
+        uint64 prevPublishTime = uint64(block.timestamp - 1);
+        bytes[] memory priceUpdate = new bytes[](1);
+        
+        priceUpdate[0] = pythAddress.createPriceFeedUpdateData(id, price, conf, expo, emaPrice, emaConf, publishTime, prevPublishTime);
+        uint requiredFee = pythAddress.getUpdateFee(priceUpdate);
+        pythAddress.updatePriceFeeds{value: requiredFee}(priceUpdate);
+
+        uint256 amountOut = tradingHub.buy{value: 1 ether}(token, 1000, address(this), priceUpdate);
+        //check balance of user
+        assertEq(ERC20(token).balanceOf(address(this)), 3999971014888);
+
+        // Approve the TradingHub contract to spend tokens
+        ERC20(token).approve(address(tradingHub), type(uint64).max);
+
+        // Perform sell operation for more than the user has
+        
+        tradingHub.sell(token, address(this), 1000000);
+        vm.expectRevert();
+        tradingHub.sell(token, address(this), 10000000000000000);
+    }
+
+
+
+    receive() external payable {}
 }
