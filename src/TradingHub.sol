@@ -36,11 +36,9 @@ contract TradingHub is Ownable {
     mapping(address token => uint256 currentMarketCapEther) public tokenMarketCap;
 
     constructor(
-        address newBondingCurve,
         address pythContractAddress,
         uint256 newMigrationUsdValue
     ) Ownable(msg.sender) {
-        bondingCurve = newBondingCurve;
         ethUsdPriceFeed = IPyth(pythContractAddress);
         migrationUsdValue = newMigrationUsdValue;
     }
@@ -125,6 +123,9 @@ contract TradingHub is Ownable {
             revert TRANSFER_FAILED();
         }
     }
+    function setBondingCurve(address newBondingCurve) public onlyOwner {
+        bondingCurve = newBondingCurve;
+    }
 
     // this migraate 8k to ambiant dex, 4k to bribe the validators and rest remains in the bonding curve
     function _migrateAndBribe() private {}
@@ -134,9 +135,6 @@ contract TradingHub is Ownable {
         return uint256(uint64(price.price)) * ethAmount / 1e18;
     }
 
-    function setBondingCurve(address newBondingCurve) public onlyOwner {
-        bondingCurve = newBondingCurve;
-    }
 
     function getBondingCurve() public view returns (address) {
         return bondingCurve;
