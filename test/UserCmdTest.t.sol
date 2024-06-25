@@ -78,50 +78,12 @@ contract UserCmdTest is Test {
         bytes memory returnData = IDexContract(dex).userCmd{value: 1 ether}(3, initPoolCmd);
 
         console.logBytes(returnData);
-
-        // IDexContract(dex).userCmd(1, initPoolCmd3);
-
-        //  deal(address(doggy2), newaddy, type(uint64).max);
-        //    vm.deal(newaddy, 10000000 ether);
-
-        // vm.prank(newaddy);
-        // IERC20(doggy2).approve(address(dex), type(uint64).max);
-
-        //  vm.prank(newaddy);
-        // bytes memory returnData2 = IDexContract(dex).userCmd{value: 1 ether}(3,initPoolCmd);
-
-        /// right the funciton of above except with the call from below
         vm.deal(newaddy, 1000000 ether);
         vm.prank(newaddy);
         IERC20(doggy2).approve(address(dex), type(uint64).max);
         vm.prank(newaddy);
         bytes memory returnData3 = IDexContract(dex).userCmd{value: 1 ether}(2, addToPoolCmd);
         console.logBytes(returnData3);
-
-        //      userCmd(2, abi.encode(
-        //     code,         // uint8
-        //     base,         // address
-        //     quote,        // address
-        //     poolIdx,      // uint256
-        //     bidTick,      // int24
-        //     askTick,      // int24
-        //     qty,          // uint128
-        //     limitLower,   // uint128
-        //     limitHigher,  // uint128
-        //     settleFlags,  // uint8
-        //     lpConduit     // address
-        // ))
-
-        //
-
-        // bytes memory addToPoolCmd = abi.encode(2, 3, eth, dai, 0, 0, 0, 1, 0, 0, BASE_SIDE_SETTLE, address(0));
-        // (bool success1, bytes memory data1) = address(hotPath).call{value: 10**15, gas: 6000000}(abi.encodeWithSignature("userCmd(bytes)", addToPoolCmd));
-        // require(success1, "Transaction Failed");
-        // console.log("here maybe?");
-        // console.logBytes(data1);
-        // (int128 baseFlow, int128 quoteFlow) = abi.decode(data1, (int128 , int128 ));
-        // Add assertions to verify the expected state changes
-        // assertEq(dex.someStateVariable(), expectedValue);
     }
 
     function testCreateSamePoolTwice() public {
