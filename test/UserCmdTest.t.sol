@@ -51,7 +51,7 @@ contract UserCmdTest is Test {
 
     function testUserCmd() public {
         // deploy the token
-        address doggy2 = TokenFactory(tokenFactory).createNewMeme("Nirlin Token", "NTN");
+        address doggy2 = TokenFactory(tokenFactory).createNewMeme(1, 0, "Nirlin Token", "NTN");
         console.log("DOGGY: ", doggy2);
         bytes memory initPoolCmd = abi.encode(71, address(0), address(doggy2), uint256(420), sqrtPrice);
         bytes memory addToPoolCmd = abi.encode(
@@ -88,7 +88,7 @@ contract UserCmdTest is Test {
 
     function testCreateSamePoolTwice() public {
         // deploy the token
-        address doggy2 = TokenFactory(tokenFactory).createNewMeme("Nirlin Token", "NTN");
+        address doggy2 = TokenFactory(tokenFactory).createNewMeme(1, 0, "Nirlin Token", "NTN");
         console.log("DOGGY: ", doggy2);
         bytes memory initPoolCmd = abi.encode(71, address(0), address(doggy2), uint256(420), sqrtPrice);
         bytes memory addToPoolCmd = abi.encode(

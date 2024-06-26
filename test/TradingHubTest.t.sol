@@ -15,16 +15,28 @@ contract TradingHubTestContract is Test {
     TradingHub tradingHub;
     MockPyth pythAddress;
     address token;
+    //mock address
+    address alice = vm.addr(1);
+    address bob = vm.addr(2);
+    address jose = vm.addr(3);
+    address maria = vm.addr(4);
+    
 
     function setUp() public {
         vm.createSelectFork("https://eth-mainnet.g.alchemy.com/v2/miIScEoe9D6YBuuUrayW6tN7oecsWApe"); // Fork Mainnet for Ambient Finance at the latest block
         pythAddress = new MockPyth(block.timestamp, 1);
         tradingHub = new TradingHub(address(pythAddress), 69000 ether);
-        dex = new ExponentialBondingCurve(4, address(tradingHub), 1);
-        tradingHub.setBondingCurve(address(dex));
+        //dex = new ExponentialBondingCurve(4, address(tradingHub), 1);
+        
         tokenFactory = new TokenFactory(0, address(tradingHub), 69_000 ether);
         tradingHub.setTokenFactory(address(tokenFactory));
-        token = tokenFactory.createNewMeme("New token", "NTN");
+        token = tokenFactory.createNewMeme(1, 0, "New token", "NTN");
+        //deal alice and bob eth
+        deal(alice, 100 ether);
+        deal(bob, 100 ether);
+        deal(jose, 100 ether);
+        deal(maria, 100 ether);
+
     }
 
     function testUserBuy() public {
@@ -46,7 +58,26 @@ contract TradingHubTestContract is Test {
         bool success = pythAddress.priceFeedExists(id);
         console.log("Price feed exists: ", success);
 
-        tradingHub.buy{value: 1 ether}(address(token), 1000, address(this), priceUpdate);
+
+        vm.prank(bob);
+
+
+        tradingHub.buy{value: 1 ether}(address(token), 0, bob, priceUpdate);
+        console.log("Balance of bob: ", ERC20(token).balanceOf(bob));
+        
+        
+        vm.prank(alice);
+
+        tradingHub.buy{value: 1 ether}(address(token), 0, alice, priceUpdate);
+        console.log("Balance alice", ERC20(token).balanceOf(alice));
+
+        vm.prank(jose);
+        tradingHub.buy{value: 1 ether}(address(token), 0, jose, priceUpdate);
+        console.log("Balance jose", ERC20(token).balanceOf(jose));
+
+        vm.prank(maria);
+        tradingHub.buy{value: 1 ether}(address(token), 0, maria, priceUpdate);
+        console.log("Balance maria", ERC20(token).balanceOf(maria));
     }
 
     function testBuyInvalidArgs() public {
@@ -63,11 +94,6 @@ contract TradingHubTestContract is Test {
     function testSellNotEnoughAmountOut() public {
         vm.expectRevert();
         tradingHub.sell(token, address(this), 1000);
-    }
-
-    function testSetBondingCurve() public {
-        tradingHub.setBondingCurve(address(0x123));
-        assertEq(tradingHub.getBondingCurve(), address(0x123));
     }
 
     function testSetAndGetPriceFeed() public {

@@ -22,7 +22,6 @@ contract TradingHub is Ownable {
 
     // TODO:add the fee mechanism here
 
-    address public bondingCurve;
     address public tokenFactory;
 
     // will use the pyth oracle as chainlink oracle is not available on berachain
@@ -57,7 +56,7 @@ contract TradingHub is Ownable {
             revert INVALID_ARGS();
         }
         // call the relevant function on the bonding curve
-        uint256 amountOut = IExponentialBondingCurve(bondingCurve).curvedMint(msg.value, token);
+        uint256 amountOut = IExponentialBondingCurve(token).curvedMint(msg.value, token);
 
         // send tokens to the caller
         IERC20(token).transfer(receiver, amountOut);
@@ -99,7 +98,7 @@ contract TradingHub is Ownable {
             revert INVALID_ARGS();
         }
 
-        uint256 amountOut = IExponentialBondingCurve(bondingCurve).curvedBurn(amount, token);
+        uint256 amountOut = IExponentialBondingCurve(token).curvedBurn(amount, token);
 
         if (amountOut == 0) {
             revert NOT_ENOUGH_AMOUNT_OUT();
@@ -127,13 +126,7 @@ contract TradingHub is Ownable {
         return uint256(uint64(price.price)) * ethAmount / 1e18;
     }
 
-    function setBondingCurve(address newBondingCurve) public onlyOwner {
-        bondingCurve = newBondingCurve;
-    }
 
-    function getBondingCurve() public view returns (address) {
-        return bondingCurve;
-    }
 
     function setTokenFactory(address newTokenFactory) public onlyOwner {
         tokenFactory = newTokenFactory;

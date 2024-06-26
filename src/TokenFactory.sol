@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Ownable} from "openzeppelin-contracts/access/Ownable.sol";
-import "./MemeToken.sol";
+import "./ExponentialBondingCurve.sol";
 import "openzeppelin-contracts/interfaces/IERC20.sol";
 
 error NOT_ENOUGH_FEE_SENT();
@@ -30,13 +30,13 @@ contract TokenFactory is Ownable {
         supply = newSupply;
     }
 
-    function createNewMeme(string memory tokenName, string memory symbol) public payable returns (address) {
+    function createNewMeme(uint reserveRatio, uint maxGasPrice, string memory tokenName, string memory symbol) public payable returns (address) {
         if (msg.value < feeInEth) {
             revert NOT_ENOUGH_FEE_SENT();
         }
 
         // if enough eth is sent create a new ERC20 token
-        IERC20 newToken = new MemeToken(tokenName, symbol, supply);
+        IERC20 newToken = new ExponentialBondingCurve(tradingHub, reserveRatio, maxGasPrice, tokenName, symbol);
 
         // we need to send this token to mint 800 million of these tokens and than send them to the bonding curve
         // safe ERC20 is not needed as all the tokens are standard in house implementation.
