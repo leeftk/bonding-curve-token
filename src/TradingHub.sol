@@ -97,15 +97,16 @@ contract TradingHub is Ownable {
         if (address(token) == address(0) || receiver == address(0)) {
             revert INVALID_ARGS();
         }
-
+        // transfer the amount out from the caller and transfer him the ether
+        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        
         uint256 amountOut = IExponentialBondingCurve(token).curvedBurn(amount, token);
 
         if (amountOut == 0) {
             revert NOT_ENOUGH_AMOUNT_OUT();
         }
 
-        // transfer the amount out from the caller and transfer him the ether
-        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        
 
         uint256 tokenCap = tokenMarketCap[token];
         tokenCap = tokenCap - amountOut;

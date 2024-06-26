@@ -149,7 +149,7 @@ contract TradingHubTestContract is Test {
         uint256 requiredFee = pythAddress.getUpdateFee(priceUpdate);
         pythAddress.updatePriceFeeds{value: requiredFee}(priceUpdate);
 
-        uint256 amountOut = tradingHub.buy{value: 1 ether}(token, 1000, address(this), priceUpdate);
+        uint256 amountOut = tradingHub.buy{value: 1 ether}(token, 0, address(this), priceUpdate);
         //check balance of user
         assertEq(ERC20(token).balanceOf(address(this)), 3999971014888);
 
@@ -161,6 +161,58 @@ contract TradingHubTestContract is Test {
         tradingHub.sell(token, address(this), 1000000);
         vm.expectRevert();
         tradingHub.sell(token, address(this), 10000000000000000);
+    }
+    ///copy my buy test in this file and sample the sell test to show me a test where multiple users are selling after they gbbought
+
+    function testMultipleSalesFromUserssss() public {
+
+             // First, perform a buy operation
+        bytes32 id = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
+        int64 price = 1 ether;
+        uint64 conf = 1;
+        int32 expo = 1;
+        int64 emaPrice = 1 ether;
+        uint64 emaConf = 1;
+        uint64 publishTime = uint64(block.timestamp);
+        uint64 prevPublishTime = uint64(block.timestamp - 1);
+        bytes[] memory priceUpdate = new bytes[](1);
+
+        priceUpdate[0] = pythAddress.createPriceFeedUpdateData(
+            id, price, conf, expo, emaPrice, emaConf, publishTime, prevPublishTime
+        );
+        uint256 requiredFee = pythAddress.getUpdateFee(priceUpdate);
+        pythAddress.updatePriceFeeds{value: requiredFee}(priceUpdate);
+
+        uint256 amountOut = tradingHub.buy{value: 1 ether}(token, 0, address(this), priceUpdate);
+        //check balance of user
+
+        // Approve the TradingHub contract to spend tokens
+        ERC20(token).approve(address(tradingHub), type(uint64).max);
+
+
+        vm.prank(jose);
+        tradingHub.buy{value: 1 ether}(address(token), 0, jose, priceUpdate);
+        console.log("Balance jose", ERC20(token).balanceOf(jose));
+
+        vm.prank(maria);
+        tradingHub.buy{value: 1 ether}(address(token), 0, maria, priceUpdate);
+        console.log("Balance maria", ERC20(token).balanceOf(maria));
+
+        // Perform sell operation for more than the user has
+        vm.prank(jose);
+        ERC20(token).approve(address(tradingHub), type(uint64).max);
+        vm.prank(jose);
+        tradingHub.sell(token, msg.sender, 10);
+        console.log("Balance jose", ERC20(token).balanceOf(jose));
+        vm.prank(maria);
+        ERC20(token).approve(address(tradingHub), type(uint64).max);
+        tradingHub.sell(token, msg.sender, 10);
+        vm.prank(maria);
+        console.log("Balance maria", ERC20(token).balanceOf(maria));
+
+
+
+
     }
 
     receive() external payable {}
