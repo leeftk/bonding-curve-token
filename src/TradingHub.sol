@@ -7,6 +7,7 @@ import "./interfaces/IExponentialBondingCurve.sol";
 import "./interfaces/ITokenFactory.sol";
 import "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
+import "forge-std/console.sol";
 
 error NOT_ENOUGH_AMOUNT_OUT();
 error NOT_ENOUGH_BALANCE_IN_CONTRACT();
@@ -32,6 +33,7 @@ contract TradingHub is Ownable {
     uint256 public migrationUsdValue;
 
     mapping(address token => uint256 currentMarketCapEther) public tokenMarketCap;
+    mapping(address token => bool migrated) public tokenMigrated;
 
     constructor(address newethUsdPriceFeed, uint256 newMigrationUsdValue) Ownable(msg.sender) {
         ethUsdPriceFeed = IPyth(newethUsdPriceFeed);
@@ -42,19 +44,20 @@ contract TradingHub is Ownable {
     function buy(address token, uint256 minimumAmountOut, address receiver, bytes[] calldata priceUpdate)
         public
         payable
-        returns (uint256)
+        returns (uint256,bool)
     {
         if (ITokenFactory(tokenFactory).tokenToCreator(token) == address(0)) {
             revert WTF_IS_THIS_TOKEN();
         }
 
-        if (IERC20(token).balanceOf(address(this)) < minimumAmountOut) {
-            revert NOT_ENOUGH_BALANCE_IN_CONTRACT();
-        }
 
         if (address(token) == address(0) || receiver == address(0)) {
             revert INVALID_ARGS();
         }
+
+        // if the token have been migrated no trading can happen in bonding curve
+        require(!tokenMigrated[token]);
+        
         // call the relevant function on the bonding curve
         uint256 amountOut = IExponentialBondingCurve(token).curvedMint(msg.value, token);
 
@@ -79,16 +82,36 @@ contract TradingHub is Ownable {
         PythStructs.Price memory price = ethUsdPriceFeed.getPrice(priceFeedId);
 
         // now based on this price, we need to calculate the worth of eth the flown into certain token
+        console.log("here before calculation of worth ");
         uint256 tokenUsdWorth = _tokenUsdWorth(price, tokenMarketCap[token]);
+        console.log("token USD worth: ",tokenUsdWorth);
 
-        if (tokenUsdWorth >= migrationUsdValue) {
-            _migrateAndBribe();
+        bool migrated;
+        // on migration check the total supply of the bancour bonding curve token
+        // check how much are left till we reach the 800 million suppy
+        // mint the remainning tokens
+        // add the liquidity to the pool
+        if (tokenUsdWorth >= migrationUsdValue && !tokenMigrated[token]) {
+            // check the total supply of token
+            uint256 tokenTotalSupply = IERC20(token).totalSupply();
+
+            // TODO: use a variable for the supply here instead of hardcoding it. 
+            if(tokenTotalSupply < 80000000 ether)
+            {
+                // TODO: use a variable for 800 million instead of hardcoding
+                uint256 remainningTokens = 800000000 ether - tokenTotalSupply;
+                IExponentialBondingCurve(token).liquidityMint(remainningTokens);
+                // now the trading hub should have a lot of balance that will be added to BEX
+            }
+            migrated = _migrateAndBribe(token);
         }
 
-        return amountOut;
+        return (amountOut, migrated);
     }
 
     function sell(address token, address receiver, uint256 amount) public {
+                // if the token have been migrated no trading can happen in bonding curve
+        require(!tokenMigrated[token]);
         // this is necessary otherwise any one can sell any arbitrary token
         if (ITokenFactory(tokenFactory).tokenToCreator(token) == address(0)) {
             revert WTF_IS_THIS_TOKEN();
@@ -109,10 +132,22 @@ contract TradingHub is Ownable {
         
 
         uint256 tokenCap = tokenMarketCap[token];
-        tokenCap = tokenCap - amountOut;
+
+        console.log("Token Cap: ",tokenCap);
+        console.log("Amount Out: ", amountOut);
+
+        if(amountOut > tokenCap)
+        {
+            tokenCap = 0;
+        }
+        else 
+        {
+            tokenCap = tokenCap - amountOut;
+        }
+        
 
         tokenMarketCap[token] = tokenCap;
-
+        console.log("ETHER BALANCE: ", address(this).balance);
         (bool success,) = address(receiver).call{value: amountOut}("");
         if (!success) {
             revert TRANSFER_FAILED();
@@ -120,11 +155,19 @@ contract TradingHub is Ownable {
     }
 
     // this migraate 8k to ambiant dex, 4k to bribe the validators and rest remains in the bonding curve
-    function _migrateAndBribe() private {}
+    function _migrateAndBribe(address token) private returns(bool) {
+        tokenMigrated[token] = true;
+
+        // trading in bonding curve should close after migration
+        return true;
+    }
 
     function _tokenUsdWorth(PythStructs.Price memory price, uint256 ethAmount) private returns (uint256) {
+       
         require(price.price >= 0, "Price must be non-negative");
-        return uint256(uint64(price.price)) * ethAmount / 1e18;
+        // 1e18 * 1e6 / 1e6 make token worth right
+        // TODO: remove this self introduced bug
+        return uint256(uint64(price.price)) * ethAmount / 1e6;
     }
 
 
