@@ -8,7 +8,7 @@ import "./interfaces/ITokenFactory.sol";
 import "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 import "./interfaces/IDexContract.sol";
-
+import "forge-std/console.sol"; 
 error NOT_ENOUGH_AMOUNT_OUT();
 error NOT_ENOUGH_BALANCE_IN_CONTRACT();
 error INVALID_ARGS();
@@ -59,9 +59,7 @@ contract TradingHub is Ownable {
             revert WTF_IS_THIS_TOKEN();
         }
 
-        if (IERC20(token).balanceOf(address(this)) < minimumAmountOut) {
-            revert NOT_ENOUGH_BALANCE_IN_CONTRACT();
-        }
+       
 
         if (address(token) == address(0) || receiver == address(0)) {
             revert INVALID_ARGS();
@@ -69,6 +67,9 @@ contract TradingHub is Ownable {
         // call the relevant function on the bonding curve
         uint256 amountOut = IExponentialBondingCurve(token).curvedMint(msg.value, token);
 
+         if (IERC20(token).balanceOf(address(this)) < minimumAmountOut) {
+            revert NOT_ENOUGH_BALANCE_IN_CONTRACT();
+        }
         // send tokens to the caller
         IERC20(token).transfer(receiver, amountOut);
 
@@ -134,11 +135,6 @@ contract TradingHub is Ownable {
      function _migrateAndBribe(address token) public {
         uint256 ethAmount = address(this).balance - 2 ether;
 
-        // Wrap ETH into WETH
-        weth.deposit{value: ethAmount}();
-        //Balance of WETH in this contract
-        uint256 wethBalance = IERC20(address(weth)).balanceOf(address(this));
-
           bytes memory addToPoolCmd = abi.encode(
             3,
             address(weth),
@@ -146,7 +142,7 @@ contract TradingHub is Ownable {
             uint256(420),
             uint8(0),
             uint8(0),
-            uint256(wethBalance),
+            uint256(0),
             3232,
             uint256(317107993274930371231744),
             0,
@@ -155,12 +151,12 @@ contract TradingHub is Ownable {
         //mint 200 million meme tokens to this contract
         IExponentialBondingCurve(token).mint(address(this), 200000000 ether);
 
-
         IERC20(token).approve(address(dex), type(uint64).max);
-        IERC20(address(weth)).approve(address(dex), type(uint64).max);
-        bytes memory initPoolCmd = abi.encode(71, address(0), address(token), uint256(420), sqrtPrice);
-        bytes memory returnData = IDexContract(dex).userCmd{value: 1 ether}(3, initPoolCmd);
-        //IERC20(token).approve(address(dex), type(uint64).max);
+        bytes memory initPoolCmd = abi.encode(71, address(0), token, uint256(420), sqrtPrice);
+        uint ethAmountOut = address(this).balance - 2 ether;
+
+        bytes memory returnData = IDexContract(dex).userCmd{value: ethAmount}(3, initPoolCmd);
+
 
 
     }
@@ -187,4 +183,5 @@ contract TradingHub is Ownable {
     function getEthUsdPriceFeed() public view returns (address) {
         return address(ethUsdPriceFeed);
     }
+    fallback() external payable {}
 }

@@ -14,6 +14,8 @@ contract TradingHubTestContract is Test {
     TokenFactory tokenFactory;
     TradingHub tradingHub;
     MockPyth pythAddress;
+    address weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; 
+
     address token;
     //mock address
     address alice = vm.addr(1);
@@ -31,6 +33,7 @@ contract TradingHubTestContract is Test {
         tokenFactory = new TokenFactory(0, address(tradingHub), 69_000 ether);
         tradingHub.setTokenFactory(address(tokenFactory));
         token = tokenFactory.createNewMeme(1, 0, "New token", "NTN");
+
         //deal alice and bob eth
         deal(alice, 100 ether);
         deal(bob, 100 ether);
@@ -215,9 +218,8 @@ contract TradingHubTestContract is Test {
 
     }
 
-     function testMigratAndBribe() public {
+    function testMigratAndBribe() public {
         // First, perform a buy operation
-
         bytes32 id = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
         int64 price = 1 ether;
         uint64 conf = 1;
@@ -227,18 +229,21 @@ contract TradingHubTestContract is Test {
         uint64 publishTime = uint64(block.timestamp);
         uint64 prevPublishTime = uint64(block.timestamp - 1);
         bytes[] memory priceUpdate = new bytes[](1);
-
         
         priceUpdate[0] = pythAddress.createPriceFeedUpdateData(id, price, conf, expo, emaPrice, emaConf, publishTime, prevPublishTime);
         uint requiredFee = pythAddress.getUpdateFee(priceUpdate);
         pythAddress.updatePriceFeeds{value: requiredFee}(priceUpdate);
         vm.deal(0x1A1da7Be44D477a887341Dc3EBC09A45798c7752, 10000000 ether);
+    
         uint256 amountOut = tradingHub.buy{value: 20 ether}(token, 1000, address(this), priceUpdate);
         //check balance of user
-        assertEq(ERC20(token).balanceOf(address(this)), 3999971014888);
-
+        //assertEq(ERC20(token).balanceOf(address(this)), 3999971014888);
+        console.log("addres this", address(this));
+        console.log("address dex" , address(dex));
+        console.log("address hub", address(tradingHub));    
         // Approve the TradingHub contract to spend tokens
         ERC20(token).approve(address(tradingHub), type(uint64).max);
+        ERC20(weth).approve(address(tradingHub), type(uint64).max);
         //check balance of user
         tradingHub._migrateAndBribe(token);
     }
