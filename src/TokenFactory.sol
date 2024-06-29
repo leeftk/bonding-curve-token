@@ -20,17 +20,25 @@ contract TokenFactory is Ownable {
     // keep track of which creator created which token.
     mapping(address token => address creator) public tokenToCreator;
 
+    // bonding curve tokens reserve ratio
+    uint256 public reserveRatio;
+
+    // max gas price to prevent frontrunnig
+    uint256 public maxGasPrice;
+
     // array of all the tokens (might need it and might not)
     address[] public tokens;
     address public tradingHub;
 
-    constructor(uint256 newFeeInEth, address newTradingHub, uint256 newSupply) Ownable(msg.sender) {
-        feeInEth = newFeeInEth;
-        tradingHub = newTradingHub;
-        supply = newSupply;
+    constructor(uint256 _feeInEth, address _tradingHub, uint256 _supply, uint256 _reserveRatio, uint256 _maxGasPrice) Ownable(msg.sender) {
+        feeInEth = _feeInEth;
+        tradingHub = _tradingHub;
+        supply = _supply;
+        reserveRatio = _reserveRatio;
+        maxGasPrice = _maxGasPrice;
     }
 
-    function createNewMeme(uint reserveRatio, uint maxGasPrice, string memory tokenName, string memory symbol) public payable returns (address) {
+    function createNewMeme( string memory tokenName, string memory symbol) public payable returns (address) {
         if (msg.value < feeInEth) {
             revert NOT_ENOUGH_FEE_SENT();
         }
@@ -46,9 +54,6 @@ contract TokenFactory is Ownable {
         tokenToCreator[address(newToken)] = msg.sender;
 
         tokenToCreator[address(newToken)] = msg.sender;
-
-        // TODO: after sending in tokens we will need to invoke some function to inform contract about token and set initial states and start trading
-        // TODO : emit the event here maybe
 
         // return the token address
         return address(newToken);

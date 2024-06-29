@@ -41,6 +41,7 @@ contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
         }
         console.log("wtf");
         return calculatePurchaseReturn(
+            // 800 millions, trading hub
             supplyAmount, poolBalance, uint32(reserveRatio), _amount
         );
     }
@@ -92,6 +93,10 @@ contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
         _burn(msg.sender, _amount);
         poolBalance -= reimbursement;
         return reimbursement;
+    }
+
+    function liquidityMint(uint256 amount) external onlyTradingHub {
+        _mint(msg.sender, amount);
     }
 
     modifier validGasPrice() {
