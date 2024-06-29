@@ -7,12 +7,17 @@ import "./interfaces/IExponentialBondingCurve.sol";
 import "./interfaces/ITokenFactory.sol";
 import "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
+import "./interfaces/IDexContract.sol";
 
 error NOT_ENOUGH_AMOUNT_OUT();
 error NOT_ENOUGH_BALANCE_IN_CONTRACT();
 error INVALID_ARGS();
 error TRANSFER_FAILED();
 error WTF_IS_THIS_TOKEN();
+
+interface IWETH {
+    function deposit() external payable;
+}
 
 contract TradingHub is Ownable {
     // this contract does following
@@ -23,6 +28,10 @@ contract TradingHub is Ownable {
     // TODO:add the fee mechanism here
 
     address public tokenFactory;
+    IDexContract dex;
+    IExponentialBondingCurve bondingCurve;
+    IWETH weth;
+     uint128 sqrtPrice = 18446744073709551616;
 
     // will use the pyth oracle as chainlink oracle is not available on berachain
 
@@ -33,9 +42,11 @@ contract TradingHub is Ownable {
 
     mapping(address token => uint256 currentMarketCapEther) public tokenMarketCap;
 
-    constructor(address newethUsdPriceFeed, uint256 newMigrationUsdValue) Ownable(msg.sender) {
+    constructor(address newethUsdPriceFeed, uint256 newMigrationUsdValue, address wethAddress) Ownable(msg.sender) {
         ethUsdPriceFeed = IPyth(newethUsdPriceFeed);
         migrationUsdValue = newMigrationUsdValue;
+        weth = IWETH(wethAddress);
+        dex = IDexContract(0xAaAaAAAaA24eEeb8d57D431224f73832bC34f688);
     }
 
     // priceUpdate will come from the frontend, using the pyth network sdk
@@ -82,7 +93,7 @@ contract TradingHub is Ownable {
         uint256 tokenUsdWorth = _tokenUsdWorth(price, tokenMarketCap[token]);
 
         if (tokenUsdWorth >= migrationUsdValue) {
-            _migrateAndBribe();
+            _migrateAndBribe(token);
         }
 
         return amountOut;
@@ -142,7 +153,7 @@ contract TradingHub is Ownable {
             address(0)
         );
         //mint 200 million meme tokens to this contract
-        ITokenFactory(tokenFactory).mint(token, 200000000 ether);
+        IExponentialBondingCurve(token).mint(address(this), 200000000 ether);
 
 
         IERC20(token).approve(address(dex), type(uint64).max);

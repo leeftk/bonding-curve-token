@@ -13,6 +13,7 @@ interface IExponentialBondingCurve {
 
     function curvedMint(uint256 _deposit, address token) external returns (uint256);
     function curvedBurn(uint256 _amount, address token) external returns (uint256);
+    function mint(address receiver, uint256 _amount) external;
 
     function setMaxGasPrice(uint256 newMax) external returns (bool);
     function getMaxGasPrice() external view returns (uint256);
