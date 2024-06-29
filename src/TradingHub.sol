@@ -14,6 +14,7 @@ error NOT_ENOUGH_BALANCE_IN_CONTRACT();
 error INVALID_ARGS();
 error TRANSFER_FAILED();
 error WTF_IS_THIS_TOKEN();
+error AMOUNT_SHOULD_BE_GREATRE_THAN_RESERVE_RATIO();
 
 contract TradingHub is Ownable {
     // this contract does following
@@ -111,10 +112,16 @@ contract TradingHub is Ownable {
 
     function sell(address token, address receiver, uint256 amount) public {
                 // if the token have been migrated no trading can happen in bonding curve
+                console.log("BALANCE OF CALLER: (JOSE) ",IERC20(token).balanceOf(msg.sender));
         require(!tokenMigrated[token]);
         // this is necessary otherwise any one can sell any arbitrary token
         if (ITokenFactory(tokenFactory).tokenToCreator(token) == address(0)) {
             revert WTF_IS_THIS_TOKEN();
+        }
+
+        if(amount < IExponentialBondingCurve(token).reserveRatio())
+        {
+            revert AMOUNT_SHOULD_BE_GREATRE_THAN_RESERVE_RATIO();
         }
 
         if (address(token) == address(0) || receiver == address(0)) {

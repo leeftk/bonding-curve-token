@@ -31,7 +31,7 @@ contract TradingHubTestContract is Test {
         //dex = new ExponentialBondingCurve(4, address(tradingHub), 1);
         
         // the reserve ratio 1000000 represents 100% and set it as  100000 here which is 10%
-        tokenFactory = new TokenFactory(0, address(tradingHub), 69_000 ether, 350000, 10000);
+        tokenFactory = new TokenFactory(0, address(tradingHub), 69_000 ether, 250000, 10000);
         tradingHub.setTokenFactory(address(tokenFactory));
         token = tokenFactory.createNewMeme( "New token", "NTN");
         //deal alice and bob eth
@@ -103,19 +103,15 @@ contract TradingHubTestContract is Test {
         assertEq(tradingHub.getEthUsdPriceFeed(), newPriceFeed);
     }
 
-    function testUserSellOnce() public {
-        (uint256 amountOut,) = tradingHub.buy{value: 1 ether}(token, 1000, address(this), priceUpdate);
-        //check balance of user
-        assert(ERC20(token).balanceOf(address(this)) != 0);
-
-        // Approve the TradingHub contract to spend tokens
+    function testUserSellOnce() external {
+        vm.startPrank(jose);
+        (uint256 amountOut,) = tradingHub.buy{value: 1 ether}(token, 1000, address(jose), priceUpdate);
         ERC20(token).approve(address(tradingHub), type(uint256).max);
-
-        // Perform sell operation for the same amount
-        tradingHub.sell(token, address(this), ERC20(token).balanceOf(address(this)));
+        tradingHub.sell(token, address(this), ERC20(token).balanceOf(jose));
+        vm.stopPrank();
     }
 
-    function testUserSellMoreThanTheyHave() public {
+    function testUserSellMoreThanTheyHave() external {
 
         (uint256 amountOut, ) = tradingHub.buy{value: 1 ether}(token, 0, address(this), priceUpdate);
         //check balance of user
@@ -135,38 +131,37 @@ contract TradingHubTestContract is Test {
     }
     ///copy my buy test in this file and sample the sell test to show me a test where multiple users are selling after they gbbought
 
-    function testMultipleSalesFromUserssss() public {
+    function testMultipleSalesFromUserssss() external {
 
-        (uint256 amountOut,) = tradingHub.buy{value: 1 ether}(token, 0, address(this), priceUpdate);
-        //check balance of user
-
-        // Approve the TradingHub contract to spend tokens
-        ERC20(token).approve(address(tradingHub), type(uint64).max);
-
-
-        vm.prank(jose);
+        vm.startPrank(jose);
         tradingHub.buy{value: 1 ether}(address(token), 0, jose, priceUpdate);
-        console.log("Balance jose", ERC20(token).balanceOf(jose));
+        vm.stopPrank();
 
-        vm.prank(maria);
+        vm.startPrank(maria);
         tradingHub.buy{value: 1 ether}(address(token), 0, maria, priceUpdate);
-        console.log("Balance maria", ERC20(token).balanceOf(maria));
+        vm.stopPrank();
 
-        // Perform sell operation for more than the user has
-        vm.prank(jose);
-        ERC20(token).approve(address(tradingHub), type(uint64).max);
-        vm.prank(jose);
-        tradingHub.sell(token, msg.sender, 10);
-        console.log("Balance jose", ERC20(token).balanceOf(jose));
-        vm.prank(maria);
-        ERC20(token).approve(address(tradingHub), type(uint64).max);
-        tradingHub.sell(token, msg.sender, 10);
-        vm.prank(maria);
-        console.log("Balance maria", ERC20(token).balanceOf(maria));
+        vm.startPrank(jose);
+        ERC20(token).approve(address(tradingHub),type(uint256).max);
+        console.log("TOKEN BALANCE OF JOSE: ",ERC20(token).balanceOf(jose));
+        tradingHub.sell(address(token),maria, ERC20(token).balanceOf(jose));
+        vm.stopPrank();
 
+        vm.startPrank(maria);
+        ERC20(token).approve(address(tradingHub),type(uint256).max);
+        tradingHub.sell(address(token),maria, ERC20(token).balanceOf(maria));
+        vm.stopPrank();
 
 
+    }
 
+    function testLessThanReserveRatioAmount() external {
+        vm.startPrank(jose);
+        tradingHub.buy{value: 1 ether}(address(token), 0, jose, priceUpdate);
+        ERC20(token).approve(address(tradingHub),type(uint256).max);
+        vm.expectRevert();
+        tradingHub.sell(address(token),msg.sender, 10);
+        vm.stopPrank();
     }
 
 
