@@ -2,6 +2,7 @@
 src = 'contracts'
 out = 'out'
 libs = ['lib']
+via-ir = true
 fs_permissions = [{ access = "read-write", path = "./"}]
 
 [rpc_endpoints]

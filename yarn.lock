@@ -1472,6 +1472,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@pythnetwork/pyth-sdk-solidity@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "@pythnetwork/pyth-sdk-solidity@npm:3.1.0"
+  checksum: 41b0faa3291f40cab2650f343408d020e0f491d0f8a42ff43529db0e4f9ea5e93935249d794aa787f010abb559d6eb55dfaa4e559e52e4d9777610af5e184df8
+  languageName: node
+  linkType: hard
+
 "@rainbow-me/rainbowkit@npm:2.1.0":
   version: 2.1.0
   resolution: "@rainbow-me/rainbowkit@npm:2.1.0"
@@ -1606,21 +1613,6 @@ __metadata:
   checksum: dbb0b27df753eb6c6380010b25cc9a9ea31f9cb08864fc51e69e5880ff7e2b8f85b72caea1f1f28af165e83b72c48dd38617e43fc632779d025b50ba32ea759e
   languageName: node
   linkType: hard
-
-"@se-2/foundry@workspace:packages/foundry":
-  version: 0.0.0-use.local
-  resolution: "@se-2/foundry@workspace:packages/foundry"
-  dependencies:
-    "@types/prettier": 2
-    "@types/qrcode": 1
-    dotenv: ~16.3.1
-    envfile: ~6.18.0
-    ethers: ~5.7.1
-    prettier: ~2.8.8
-    qrcode: ~1.5.3
-    toml: ~3.0.0
-  languageName: unknown
-  linkType: soft
 
 "@se-2/nextjs@workspace:packages/nextjs":
   version: 0.0.0-use.local
@@ -3480,6 +3472,22 @@ __metadata:
   checksum: 3dd8c8d38055fedfa95c1d5fc3c99f8dd547b36287b37768db0abab3c239711f88ff58d18d155dd8ad902b0b0cee973747b7ae20ea12a09473272b0201c9edd3
   languageName: node
   linkType: hard
+
+"bonding-curve-token@workspace:packages/foundry":
+  version: 0.0.0-use.local
+  resolution: "bonding-curve-token@workspace:packages/foundry"
+  dependencies:
+    "@pythnetwork/pyth-sdk-solidity": ^3.1.0
+    "@types/prettier": 2
+    "@types/qrcode": 1
+    dotenv: ~16.3.1
+    envfile: ~6.18.0
+    ethers: ~5.7.1
+    prettier: ~2.8.8
+    qrcode: ~1.5.3
+    toml: ~3.0.0
+  languageName: unknown
+  linkType: soft
 
 "bowser@npm:^2.9.0":
   version: 2.11.0
