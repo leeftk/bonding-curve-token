@@ -17,9 +17,7 @@ error TRANSFER_FAILED();
 error WTF_IS_THIS_TOKEN();
 error AMOUNT_SHOULD_BE_GREATRE_THAN_RESERVE_RATIO();
 
-interface IWETH {
-    function deposit() external payable;
-}
+
 
 contract TradingHub is Ownable {
     // this contract does following
@@ -42,14 +40,12 @@ contract TradingHub is Ownable {
     mapping(address token => bool migrated) public tokenMigrated;
 
         IDexContract dex;
-    IWETH weth;
      uint128 sqrtPrice = 2581990000000000000000;
                          
 
-    constructor(address newethUsdPriceFeed, uint256 newMigrationUsdValue, address wethAddress, address dexAddress) Ownable(msg.sender) {
+    constructor(address newethUsdPriceFeed, uint256 newMigrationUsdValue, address dexAddress) Ownable(msg.sender) {
         ethUsdPriceFeed = IPyth(newethUsdPriceFeed);
         migrationUsdValue = newMigrationUsdValue;
-                weth = IWETH(wethAddress);
         dex = IDexContract(dexAddress);
     }
 

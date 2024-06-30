@@ -20,15 +20,13 @@ contract TradingHubTestContract is Test {
     address bob = vm.addr(2);
     address jose = vm.addr(3);
     address maria = vm.addr(4);
-       address weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; 
-
     bytes[] priceUpdate = new bytes[](1);
     
 
     function setUp() public {
         vm.createSelectFork("https://eth-mainnet.g.alchemy.com/v2/miIScEoe9D6YBuuUrayW6tN7oecsWApe"); // Fork Mainnet for Ambient Finance at the latest block
         pythAddress = new MockPyth(block.timestamp, 1);
-        tradingHub = new TradingHub(address(pythAddress), 69000 ether, address(weth), address(0xAaAaAAAaA24eEeb8d57D431224f73832bC34f688));
+        tradingHub = new TradingHub(address(pythAddress), 69000 ether, address(0xAaAaAAAaA24eEeb8d57D431224f73832bC34f688));
         //dex = new ExponentialBondingCurve(4, address(tradingHub), 1);
         
         // the reserve ratio 1000000 represents 100% and set it as  100000 here which is 10%
@@ -221,7 +219,6 @@ contract TradingHubTestContract is Test {
         console.log("address hub", address(tradingHub));    
         // Approve the TradingHub contract to spend tokens
         ERC20(token).approve(address(tradingHub), type(uint256).max);
-        ERC20(weth).approve(address(tradingHub), type(uint256).max);
         //check balance of user
         // first get the weth
 
