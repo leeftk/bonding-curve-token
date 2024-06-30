@@ -20,14 +20,13 @@ contract TradingHubTestContract is Test {
     address bob = vm.addr(2);
     address jose = vm.addr(3);
     address maria = vm.addr(4);
-
     bytes[] priceUpdate = new bytes[](1);
     
 
     function setUp() public {
         vm.createSelectFork("https://eth-mainnet.g.alchemy.com/v2/miIScEoe9D6YBuuUrayW6tN7oecsWApe"); // Fork Mainnet for Ambient Finance at the latest block
         pythAddress = new MockPyth(block.timestamp, 1);
-        tradingHub = new TradingHub(address(pythAddress), 69000 ether);
+        tradingHub = new TradingHub(address(pythAddress), 69000 ether, address(0xAaAaAAAaA24eEeb8d57D431224f73832bC34f688));
         //dex = new ExponentialBondingCurve(4, address(tradingHub), 1);
         
         // the reserve ratio 1000000 represents 100% and set it as  100000 here which is 10%
@@ -203,6 +202,27 @@ contract TradingHubTestContract is Test {
         vm.expectRevert();
         (uint256 amount2, bool migrated2) = tradingHub.buy{value: 23 ether}(address(token), 0, bob, priceUpdate);
 
+    }
+
+
+        function testMigratAndBribe() public {
+        // First, perform a buy operation
+       
+
+        vm.deal(0x1A1da7Be44D477a887341Dc3EBC09A45798c7752, 10000000 ether);
+
+        (uint256 amountOut,) = tradingHub.buy{value: 20 ether}(token, 1000, address(this), priceUpdate);
+        //check balance of user
+        //assertEq(ERC20(token).balanceOf(address(this)), 3999971014888);
+        console.log("addres this", address(this));
+        console.log("address dex" , address(dex));
+        console.log("address hub", address(tradingHub));    
+        // Approve the TradingHub contract to spend tokens
+        ERC20(token).approve(address(tradingHub), type(uint256).max);
+        //check balance of user
+        // first get the weth
+
+        (uint256 amount, bool migrated) = tradingHub.buy{value: 40 ether}(address(token), 0, address(this), priceUpdate);
     }
 
     receive() external payable {}

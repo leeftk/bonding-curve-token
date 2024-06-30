@@ -82,6 +82,10 @@ contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
         return amount;
     }
 
+      function mint(address receiver, uint256 _amount) public onlyTradingHub {
+        _mint(receiver, _amount);
+    }
+
     function curvedBurn(uint256 _amount, address token)
         public
         validGasPrice
