@@ -8,6 +8,7 @@ import "./interfaces/ITokenFactory.sol";
 import "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 import "forge-std/console.sol";
+import "./interfaces/IDexContract.sol";
 
 error NOT_ENOUGH_AMOUNT_OUT();
 error NOT_ENOUGH_BALANCE_IN_CONTRACT();
@@ -15,6 +16,10 @@ error INVALID_ARGS();
 error TRANSFER_FAILED();
 error WTF_IS_THIS_TOKEN();
 error AMOUNT_SHOULD_BE_GREATRE_THAN_RESERVE_RATIO();
+
+interface IWETH {
+    function deposit() external payable;
+}
 
 contract TradingHub is Ownable {
     // this contract does following
@@ -36,9 +41,16 @@ contract TradingHub is Ownable {
     mapping(address token => uint256 currentMarketCapEther) public tokenMarketCap;
     mapping(address token => bool migrated) public tokenMigrated;
 
-    constructor(address newethUsdPriceFeed, uint256 newMigrationUsdValue) Ownable(msg.sender) {
+        IDexContract dex;
+    IWETH weth;
+     uint128 sqrtPrice = 2581990000000000000000;
+                         
+
+    constructor(address newethUsdPriceFeed, uint256 newMigrationUsdValue, address wethAddress, address dexAddress) Ownable(msg.sender) {
         ethUsdPriceFeed = IPyth(newethUsdPriceFeed);
         migrationUsdValue = newMigrationUsdValue;
+                weth = IWETH(wethAddress);
+        dex = IDexContract(dexAddress);
     }
 
     // priceUpdate will come from the frontend, using the pyth network sdk
@@ -165,7 +177,16 @@ contract TradingHub is Ownable {
     function _migrateAndBribe(address token) private returns(bool) {
         tokenMigrated[token] = true;
 
-        // trading in bonding curve should close after migration
+        uint256 ethAmount = address(this).balance - 0.2 ether;
+        //mint 200 million meme tokens to this contract
+        IExponentialBondingCurve(token).mint(address(this), 200000000 ether);
+
+        IERC20(token).approve(address(dex), type(uint256).max);
+        bytes memory initPoolCmd = abi.encode(71, address(0), token, uint256(420), sqrtPrice);
+
+        bytes memory returnData = IDexContract(dex).userCmd{value: ethAmount}(3, initPoolCmd);
+
+
         return true;
     }
 
@@ -193,5 +214,11 @@ contract TradingHub is Ownable {
 
     function getEthUsdPriceFeed() public view returns (address) {
         return address(ethUsdPriceFeed);
+    }
+
+    receive() external payable {
+    }
+
+    fallback() external payable {
     }
 }
