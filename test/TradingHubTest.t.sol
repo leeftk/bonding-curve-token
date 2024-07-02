@@ -24,9 +24,9 @@ contract TradingHubTestContract is Test {
     
 
     function setUp() public {
-        vm.createSelectFork("https://eth-mainnet.g.alchemy.com/v2/miIScEoe9D6YBuuUrayW6tN7oecsWApe"); // Fork Mainnet for Ambient Finance at the latest block
+        vm.createSelectFork("https://bartio.rpc.berachain.com/"); // Fork Mainnet for Ambient Finance at the latest block
         pythAddress = new MockPyth(block.timestamp, 1);
-        tradingHub = new TradingHub(address(pythAddress), 69000 ether, address(0xAaAaAAAaA24eEeb8d57D431224f73832bC34f688));
+        tradingHub = new TradingHub(address(pythAddress), 69000 ether, address(0xAB827b1Cc3535A9e549EE387A6E9C3F02F481B49));
         //dex = new ExponentialBondingCurve(4, address(tradingHub), 1);
         
         // the reserve ratio 1000000 represents 100% and set it as  100000 here which is 10%

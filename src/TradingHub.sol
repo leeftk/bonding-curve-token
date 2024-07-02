@@ -39,7 +39,7 @@ contract TradingHub is Ownable {
     mapping(address token => uint256 currentMarketCapEther) public tokenMarketCap;
     mapping(address token => bool migrated) public tokenMigrated;
 
-        IDexContract dex;
+    IDexContract dex;
      uint128 sqrtPrice = 2581990000000000000000;
                          
 
@@ -178,10 +178,11 @@ contract TradingHub is Ownable {
         IExponentialBondingCurve(token).mint(address(this), 200000000 ether);
 
         IERC20(token).approve(address(dex), type(uint256).max);
-        bytes memory initPoolCmd = abi.encode(71, address(0), token, uint256(420), sqrtPrice);
+        bytes memory initPoolCmd = abi.encode(7182031, address(0), token, uint256(36000),sqrtPrice);
 
         bytes memory returnData = IDexContract(dex).userCmd{value: ethAmount}(3, initPoolCmd);
-
+        console.log("did we make it?");
+        
 
         return true;
     }
