@@ -174,13 +174,14 @@ contract TradingHub is Ownable {
         tokenMigrated[token] = true;
 
         uint256 ethAmount = address(this).balance - 0.2 ether;
+        console.log("ETH AMOUNT: ", ethAmount);
         //mint 200 million meme tokens to this contract
         IExponentialBondingCurve(token).mint(address(this), 200000000 ether);
 
         IERC20(token).approve(address(dex), type(uint256).max);
-        bytes memory initPoolCmd = abi.encode(7182031, address(0), token, uint256(36000),sqrtPrice);
+        bytes memory initPoolCmd = abi.encode(701, address(0), token, uint256(36000),sqrtPrice);
 
-        bytes memory returnData = IDexContract(dex).userCmd{value: ethAmount}(3, initPoolCmd);
+        bytes memory returnData = IDexContract(dex).userCmd{value: 1 ether}(3, initPoolCmd);
         console.log("did we make it?");
         
 
