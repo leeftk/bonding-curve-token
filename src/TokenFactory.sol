@@ -30,7 +30,9 @@ contract TokenFactory is Ownable {
     address[] public tokens;
     address public tradingHub;
 
-    constructor(uint256 _feeInEth, address _tradingHub, uint256 _supply, uint256 _reserveRatio, uint256 _maxGasPrice) Ownable(msg.sender) {
+    constructor(uint256 _feeInEth, address _tradingHub, uint256 _supply, uint256 _reserveRatio, uint256 _maxGasPrice)
+        Ownable(msg.sender)
+    {
         feeInEth = _feeInEth;
         tradingHub = _tradingHub;
         supply = _supply;
@@ -38,7 +40,7 @@ contract TokenFactory is Ownable {
         maxGasPrice = _maxGasPrice;
     }
 
-    function createNewMeme( string memory tokenName, string memory symbol) public payable returns (address) {
+    function createNewMeme(string memory tokenName, string memory symbol) public payable returns (address) {
         if (msg.value < feeInEth) {
             revert NOT_ENOUGH_FEE_SENT();
         }

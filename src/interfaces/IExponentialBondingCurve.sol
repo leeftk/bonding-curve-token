@@ -12,7 +12,7 @@ interface IExponentialBondingCurve {
     function calculateCurvedBurnReturn(uint256 _amount, address token) external view returns (uint256 burnAmount);
 
     function curvedMint(uint256 _deposit, address token) external returns (uint256);
-     function mint(address receiver, uint256 _amount) external;
+    function mint(address receiver, uint256 _amount) external;
     function curvedBurn(uint256 _amount, address token) external returns (uint256);
 
     function liquidityMint(uint256 amount) external;

@@ -5,7 +5,7 @@ import "openzeppelin-contracts/interfaces/IERC20.sol";
 import "openzeppelin-contracts/token/ERC20/ERC20.sol";
 
 import "./BancorFormula.sol";
-import "forge-std/console.sol"; 
+import "forge-std/console.sol";
 
 error NOT_TRADING_HUB();
 
@@ -15,7 +15,13 @@ contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
     uint256 public maxGasPrice;
     uint256 public poolBalance = 1;
 
-    constructor(address _tradingHub, uint256 _reserveRatio, uint256 newMaxGasPrice, string memory name, string memory symbol)ERC20(name, symbol) Ownable(msg.sender) {
+    constructor(
+        address _tradingHub,
+        uint256 _reserveRatio,
+        uint256 newMaxGasPrice,
+        string memory name,
+        string memory symbol
+    ) ERC20(name, symbol) Ownable(msg.sender) {
         reserveRatio = _reserveRatio;
         maxGasPrice = newMaxGasPrice;
         tradingHub = _tradingHub;
@@ -33,7 +39,7 @@ contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
         onlyTradingHub
         returns (uint256 mintAmount)
     {
-        uint supplyAmount;
+        uint256 supplyAmount;
         if (IERC20(token).totalSupply() == 0) {
             supplyAmount = _amount;
         } else {
@@ -42,7 +48,10 @@ contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
         console.log("wtf");
         return calculatePurchaseReturn(
             // 800 millions, trading hub
-            supplyAmount, poolBalance, uint32(reserveRatio), _amount
+            supplyAmount,
+            poolBalance,
+            uint32(reserveRatio),
+            _amount
         );
     }
 
@@ -52,9 +61,7 @@ contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
         onlyTradingHub
         returns (uint256 burnAmount)
     {
-        return calculateSaleReturn(
-            IERC20(token).totalSupply(), poolBalance, uint32(reserveRatio), _amount
-        );
+        return calculateSaleReturn(IERC20(token).totalSupply(), poolBalance, uint32(reserveRatio), _amount);
     }
 
     modifier validMint(uint256 _amount) {
@@ -78,11 +85,11 @@ contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
         uint256 amount = calculateCurvedMintReturn(_deposit, token);
         console.log("here");
         _mint(msg.sender, amount);
-         poolBalance += _deposit;
+        poolBalance += _deposit;
         return amount;
     }
 
-      function mint(address receiver, uint256 _amount) public onlyTradingHub {
+    function mint(address receiver, uint256 _amount) public onlyTradingHub {
         _mint(receiver, _amount);
     }
 
@@ -119,6 +126,7 @@ contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
     function getMaxGasPrice() public view returns (uint256) {
         return maxGasPrice;
     }
+
     function setTradingHub(address newTradingHub) public onlyOwner returns (bool) {
         tradingHub = newTradingHub;
         return true;

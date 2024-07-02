@@ -21,27 +21,26 @@ contract TradingHubTestContract is Test {
     address jose = vm.addr(3);
     address maria = vm.addr(4);
     bytes[] priceUpdate = new bytes[](1);
-    
 
     function setUp() public {
         vm.createSelectFork("https://bartio.rpc.berachain.com/"); // Fork Mainnet for Ambient Finance at the latest block
         pythAddress = new MockPyth(block.timestamp, 1);
-        tradingHub = new TradingHub(address(pythAddress), 69000 ether, address(0xAB827b1Cc3535A9e549EE387A6E9C3F02F481B49));
+        tradingHub =
+            new TradingHub(address(pythAddress), 69000 ether, address(0xAB827b1Cc3535A9e549EE387A6E9C3F02F481B49));
         //dex = new ExponentialBondingCurve(4, address(tradingHub), 1);
-        
+
         // the reserve ratio 1000000 represents 100% and set it as  100000 here which is 10%
         tokenFactory = new TokenFactory(0, address(tradingHub), 69_000 ether, 250000, 10000);
         tradingHub.setTokenFactory(address(tokenFactory));
-        token = tokenFactory.createNewMeme( "New token", "NTN");
+        token = tokenFactory.createNewMeme("New token", "NTN");
         //deal alice and bob eth
         deal(alice, 100 ether);
         deal(bob, 100 ether);
         deal(jose, 100 ether);
         deal(maria, 100 ether);
 
-
         // this is universal logic
-          bytes32 id = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
+        bytes32 id = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
         int64 price = 3000e6;
         uint64 conf = 1;
         int32 expo = -8; // this is what mainnet has for it
@@ -55,18 +54,14 @@ contract TradingHubTestContract is Test {
         );
         uint256 requiredFee = pythAddress.getUpdateFee(priceUpdate);
         pythAddress.updatePriceFeeds{value: requiredFee}(priceUpdate);
-
     }
 
     function testUserBuy() public {
-     
         vm.prank(bob);
-
 
         tradingHub.buy{value: 1 ether}(address(token), 0, bob, priceUpdate);
         console.log("Balance of bob: ", ERC20(token).balanceOf(bob));
-        
-        
+
         vm.prank(alice);
 
         tradingHub.buy{value: 1 ether}(address(token), 0, alice, priceUpdate);
@@ -111,11 +106,10 @@ contract TradingHubTestContract is Test {
     }
 
     function testUserSellMoreThanTheyHave() external {
-
-        (uint256 amountOut, ) = tradingHub.buy{value: 1 ether}(token, 0, address(this), priceUpdate);
+        (uint256 amountOut,) = tradingHub.buy{value: 1 ether}(token, 0, address(this), priceUpdate);
         //check balance of user
         assert(ERC20(token).balanceOf(address(this)) != 0);
-        //  this is failing which is ok for now as i change the price of ether. 
+        //  this is failing which is ok for now as i change the price of ether.
 
         // Approve the TradingHub contract to spend tokens
         ERC20(token).approve(address(tradingHub), type(uint256).max);
@@ -125,13 +119,12 @@ contract TradingHubTestContract is Test {
         tradingHub.sell(token, address(this), 1000000);
         uint256 balance = ERC20(token).balanceOf(address(this));
         console.log("Balance Is ; ", balance);
-         vm.expectRevert();
+        vm.expectRevert();
         tradingHub.sell(token, address(this), balance + 10);
     }
     ///copy my buy test in this file and sample the sell test to show me a test where multiple users are selling after they gbbought
 
     function testMultipleSalesFromUserssss() external {
-
         vm.startPrank(jose);
         tradingHub.buy{value: 1 ether}(address(token), 0, jose, priceUpdate);
         vm.stopPrank();
@@ -141,31 +134,28 @@ contract TradingHubTestContract is Test {
         vm.stopPrank();
 
         vm.startPrank(jose);
-        ERC20(token).approve(address(tradingHub),type(uint256).max);
-        console.log("TOKEN BALANCE OF JOSE: ",ERC20(token).balanceOf(jose));
-        tradingHub.sell(address(token),maria, ERC20(token).balanceOf(jose));
+        ERC20(token).approve(address(tradingHub), type(uint256).max);
+        console.log("TOKEN BALANCE OF JOSE: ", ERC20(token).balanceOf(jose));
+        tradingHub.sell(address(token), maria, ERC20(token).balanceOf(jose));
         vm.stopPrank();
 
         vm.startPrank(maria);
-        ERC20(token).approve(address(tradingHub),type(uint256).max);
-        tradingHub.sell(address(token),maria, ERC20(token).balanceOf(maria));
+        ERC20(token).approve(address(tradingHub), type(uint256).max);
+        tradingHub.sell(address(token), maria, ERC20(token).balanceOf(maria));
         vm.stopPrank();
-
-
     }
 
     function testLessThanReserveRatioAmount() external {
         vm.startPrank(jose);
         tradingHub.buy{value: 1 ether}(address(token), 0, jose, priceUpdate);
-        ERC20(token).approve(address(tradingHub),type(uint256).max);
+        ERC20(token).approve(address(tradingHub), type(uint256).max);
         vm.expectRevert();
-        tradingHub.sell(address(token),msg.sender, 10);
+        tradingHub.sell(address(token), msg.sender, 10);
         vm.stopPrank();
     }
 
-
     function testMigrationSuccessfull() external {
-                     // First, perform a buy operation
+        // First, perform a buy operation
 
         // now if one ether is of 3000 than sending the 23 ether should migrate it and return migrated to true
         vm.prank(jose);
@@ -176,7 +166,6 @@ contract TradingHubTestContract is Test {
         assertEq(migrated, true);
 
         // and also the total supply of token before migration should be less than 800 mil and after migration it should be 800 mil (not actually but right now it will be as migration logic is empty)
-
     }
 
     function testMigrationUnsuccessfulBeforeCapReached() external {
@@ -186,11 +175,9 @@ contract TradingHubTestContract is Test {
         console.log("Amount minted: ", amount);
 
         assertEq(migrated, false);
-
     }
 
     function testTradingStopAfterMigration() external {
-
         // migration should not happen twice for the trade happening after the migration have happened
         vm.prank(jose);
         (uint256 amount, bool migrated) = tradingHub.buy{value: 23 ether}(address(token), 0, jose, priceUpdate);
@@ -201,13 +188,10 @@ contract TradingHubTestContract is Test {
         vm.prank(bob);
         vm.expectRevert();
         (uint256 amount2, bool migrated2) = tradingHub.buy{value: 23 ether}(address(token), 0, bob, priceUpdate);
-
     }
 
-
-        function testMigratAndBribe() public {
+    function testMigratAndBribe() public {
         // First, perform a buy operation
-       
 
         vm.deal(0x1A1da7Be44D477a887341Dc3EBC09A45798c7752, 10000000 ether);
 
@@ -215,8 +199,8 @@ contract TradingHubTestContract is Test {
         //check balance of user
         //assertEq(ERC20(token).balanceOf(address(this)), 3999971014888);
         console.log("addres this", address(this));
-        console.log("address dex" , address(dex));
-        console.log("address hub", address(tradingHub));    
+        console.log("address dex", address(dex));
+        console.log("address hub", address(tradingHub));
         // Approve the TradingHub contract to spend tokens
         ERC20(token).approve(address(tradingHub), type(uint256).max);
         //check balance of user
