@@ -179,10 +179,21 @@ contract TradingHub is Ownable {
         IExponentialBondingCurve(token).mint(address(this), 200000000 ether);
 
         IERC20(token).approve(address(dex), type(uint256).max);
-        bytes memory initPoolCmd = abi.encode(701, address(0), token, uint256(36000),sqrtPrice);
-
-        bytes memory returnData = IDexContract(dex).userCmd{value: 1 ether}(3, initPoolCmd);
-        console.log("did we make it?");
+       // bytes memory initPoolCmd = abi.encode(1, address(0), token, uint256(36000),sqrtPrice);
+        ///wrap in try catch that loop through different codes
+        for(uint8 i = 0; i < 500; i++)
+        {
+            bytes memory initPoolCmd = abi.encode(i, address(0), token, uint256(36000),sqrtPrice);
+            try IDexContract(dex).userCmd{value: 1 ether}(3, initPoolCmd) {
+                console.log("did we make it?");
+                console.log("FUCK YEA", i);
+                return true;
+            } catch {
+                console.log("nah bro");
+                continue;
+            }
+        }
+        //bytes memory returnData = IDexContract(dex).userCmd{value: 1 ether}(6, initPoolCmd);
         
 
         return true;
