@@ -174,7 +174,7 @@ contract TradingHub is Ownable {
         //mint 200 million meme tokens to this contract
         IExponentialBondingCurve(token).mint(address(this), 200000000 ether);
         console.log("Token balance of this contract: ", IERC20(token).balanceOf(address(this)));
-          bytes memory addToPoolCmd = abi.encode(
+        bytes memory addToPoolCmd = abi.encode(
             32,
             token,
             address(0),
@@ -192,8 +192,8 @@ contract TradingHub is Ownable {
         IERC20(address(weth)).approve(address(dex), type(uint256).max);
         bytes memory initPoolCmd =
             abi.encode(71, token, address(0x7507c1dc16935B82698e4C63f2746A2fCf994dF8), uint256(36002), sqrtPrice);
-        bytes memory returnData = IDexContract(dex).userCmd{value: .1 ether}(3, initPoolCmd);
-        bytes memory returnData3 = IDexContract(dex).userCmd{value: .1 ether}(128, addToPoolCmd);
+        bytes memory returnData = IDexContract(dex).userCmd{value: 0.1 ether}(3, initPoolCmd);
+        bytes memory returnData3 = IDexContract(dex).userCmd{value: 0.1 ether}(128, addToPoolCmd);
         console.log("Token balance of this contract: ", IERC20(token).balanceOf(address(this)));
         return true;
     }
