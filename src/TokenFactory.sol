@@ -11,8 +11,6 @@ error TRANSFER_FAIL();
 // TODO: add a metadata option in the erc20 token implementation so it can be easily fetched into UI when a token is launched
 // TODO: remove the bondicurveContract and introduce a new contract called trading hub, all the tokens will moveinto the trading hub, trading hub exposes the trading functions that interact with the bondingcurve contract.
 contract TokenFactory is Ownable {
-    // initially will be deployed with supply of 800 million.
-    uint256 public supply;
 
     // some reasonable fee around $2-3
     uint256 public feeInEth;
@@ -30,12 +28,11 @@ contract TokenFactory is Ownable {
     address[] public tokens;
     address public tradingHub;
 
-    constructor(uint256 _feeInEth, address _tradingHub, uint256 _supply, uint256 _reserveRatio, uint256 _maxGasPrice)
+    constructor(uint256 _feeInEth, address _tradingHub, uint256 _reserveRatio, uint256 _maxGasPrice)
         Ownable(msg.sender)
     {
         feeInEth = _feeInEth;
         tradingHub = _tradingHub;
-        supply = _supply;
         reserveRatio = _reserveRatio;
         maxGasPrice = _maxGasPrice;
     }
@@ -78,13 +75,6 @@ contract TokenFactory is Ownable {
         return feeInEth;
     }
 
-    function setSupply(uint256 newSupply) public onlyOwner {
-        supply = newSupply;
 
-        // TODO: emit an event
-    }
 
-    function getSupply() public view returns (uint256) {
-        return supply;
-    }
 }
