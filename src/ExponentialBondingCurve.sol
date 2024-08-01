@@ -45,7 +45,6 @@ contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
         } else {
             supplyAmount = IERC20(token).totalSupply();
         }
-        console.log("wtf");
         return calculatePurchaseReturn(
             // 800 millions, trading hub
             supplyAmount,
@@ -83,7 +82,6 @@ contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
         returns (uint256)
     {
         uint256 amount = calculateCurvedMintReturn(_deposit, token);
-        console.log("here");
         _mint(msg.sender, amount);
         poolBalance += _deposit;
         return amount;

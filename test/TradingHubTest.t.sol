@@ -24,10 +24,9 @@ contract TradingHubTestContract is Test {
 
     function setUp() public {
         vm.createSelectFork("https://bartio.rpc.berachain.com/"); // Fork Mainnet for Ambient Finance at the latest block
-        //  vm.createSelectFork("https://eth-mainnet.g.alchemy.com/v2/miIScEoe9D6YBuuUrayW6tN7oecsWApe"); 
+        //  vm.createSelectFork("https://eth-mainnet.g.alchemy.com/v2/miIScEoe9D6YBuuUrayW6tN7oecsWApe");
         pythAddress = new MockPyth(block.timestamp, 1);
-        tradingHub =
-            new TradingHub(25 ether, address(0xAB827b1Cc3535A9e549EE387A6E9C3F02F481B49), 200000000 ether);
+        tradingHub = new TradingHub(25 ether, address(0xAB827b1Cc3535A9e549EE387A6E9C3F02F481B49), 200000000 ether);
 
         //dex = new ExponentialBondingCurve(4, address(tradingHub), 1);
 
@@ -51,9 +50,7 @@ contract TradingHubTestContract is Test {
         uint64 publishTime = uint64(block.timestamp);
         uint64 prevPublishTime = uint64(block.timestamp - 1);
 
-        priceUpdate[0] = pythAddress.createPriceFeedUpdateData(
-            id, price, conf, expo, emaPrice, emaConf, publishTime
-        );
+        priceUpdate[0] = pythAddress.createPriceFeedUpdateData(id, price, conf, expo, emaPrice, emaConf, publishTime);
         uint256 requiredFee = pythAddress.getUpdateFee(priceUpdate);
         pythAddress.updatePriceFeeds{value: requiredFee}(priceUpdate);
     }
@@ -211,7 +208,6 @@ contract TradingHubTestContract is Test {
 
         (uint256 amount, bool migrated) = tradingHub.buy{value: 40 ether}(address(token), 0, address(this));
     }
-
 
     receive() external payable {}
 }

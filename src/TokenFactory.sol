@@ -11,7 +11,6 @@ error TRANSFER_FAIL();
 // TODO: add a metadata option in the erc20 token implementation so it can be easily fetched into UI when a token is launched
 // TODO: remove the bondicurveContract and introduce a new contract called trading hub, all the tokens will moveinto the trading hub, trading hub exposes the trading functions that interact with the bondingcurve contract.
 contract TokenFactory is Ownable {
-
     // some reasonable fee around $2-3
     uint256 public feeInEth;
 
@@ -74,7 +73,4 @@ contract TokenFactory is Ownable {
     function getFee() public view returns (uint256) {
         return feeInEth;
     }
-
-
-
 }
