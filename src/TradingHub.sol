@@ -206,7 +206,7 @@ contract TradingHub is Ownable {
         uint256 ethAmount = address(this).balance - 2 ether;
         console.log("ETH AMOUNT: ", ethAmount);
         //deposit in weth
-        weth.deposit{value: ethAmount}();
+       // weth.deposit{value: ethAmount}();
         //mint 200 million meme tokens to this contract
         IExponentialBondingCurve(token).mint(address(this), 200000000 ether);
         console.log("Token balance of this contract: ", IERC20(token).balanceOf(address(this)));
@@ -229,8 +229,8 @@ contract TradingHub is Ownable {
         IERC20(token).approve(address(dex), type(uint256).max);
         IERC20(address(weth)).approve(address(dex), type(uint256).max);
         bytes memory initPoolCmd =
-            abi.encode(71, token, address(0x7507c1dc16935B82698e4C63f2746A2fCf994dF8), uint256(36001), sqrtPrice);
-        bytes memory returnData = IDexContract(dex).userCmd(3, initPoolCmd);
+            abi.encode(71, token, address(0), uint256(36001), sqrtPrice);
+        bytes memory returnData = IDexContract(dex).userCmd{value: ethAmount}(3, initPoolCmd);
         // bytes memory returnData2 = IDexContract(dex).userCmd(128, addToPoolCmd);
         console.log("Token balance of this contract: ", IERC20(token).balanceOf(address(this)));
         console.log("Weth balance of this contract after: ", IWETH(weth).balanceOf(address(this)));

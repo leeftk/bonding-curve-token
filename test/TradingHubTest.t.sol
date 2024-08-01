@@ -7,7 +7,7 @@ import "../src/ExponentialBondingCurve.sol";
 import "../src/TradingHub.sol";
 import "../src/interfaces/IDexContract.sol";
 import "../src/TokenFactory.sol";
-import "node_modules/@pythnetwork/pyth-sdk-solidity/MockPyth.sol";
+import "../lib/pyth-sdk-solidity/MockPyth.sol";
 
 contract TradingHubTestContract is Test {
     ExponentialBondingCurve dex;
@@ -52,7 +52,7 @@ contract TradingHubTestContract is Test {
         uint64 prevPublishTime = uint64(block.timestamp - 1);
 
         priceUpdate[0] = pythAddress.createPriceFeedUpdateData(
-            id, price, conf, expo, emaPrice, emaConf, publishTime, prevPublishTime
+            id, price, conf, expo, emaPrice, emaConf, publishTime
         );
         uint256 requiredFee = pythAddress.getUpdateFee(priceUpdate);
         pythAddress.updatePriceFeeds{value: requiredFee}(priceUpdate);
