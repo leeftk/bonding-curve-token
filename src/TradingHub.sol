@@ -9,6 +9,8 @@ import "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 import "forge-std/console.sol";
 import "./interfaces/IDexContract.sol";
+import "./Math/SqrtMath.sol";
+
 
 error NOT_ENOUGH_AMOUNT_OUT();
 error NOT_ENOUGH_BALANCE_IN_CONTRACT();
@@ -208,21 +210,23 @@ contract TradingHub is Ownable {
         //deposit in weth
         weth.deposit{value: ethAmount}();
         //mint 200 million meme tokens to this contract
-        IExponentialBondingCurve(token).mint(address(this), 200000000 ether);
+        IExponentialBondingCurve(token).mint(address(this), 200_000_000 ether);
         console.log("Token balance of this contract: ", IERC20(token).balanceOf(address(this)));
-        // bytes memory addToPoolCmd = abi.encode(
-        //     31,
-        //     token,
-        //     address(0),
-        //     uint256(36002),
-        //     uint8(0),
-        //     uint8(0),
-        //     -10,
-        //     0,
-        //     uint256(317107993274930371231744),
-        //     0,
-        //     address(0)
-        // );
+        uint128 sqrtPriceTargetSmallPremX96 = encodePriceSqrt(200_000_000, 23 ether);
+        
+        bytes memory addToPoolCmd = abi.encode(
+            31,
+            token,
+            address(0),
+            uint256(36002),
+            -120,
+            120,
+            -10,
+            0,
+            uint128(sqrtPriceTargetSmallPremX96),
+            0,
+            address(0)
+        );
 
    
 
@@ -231,7 +235,7 @@ contract TradingHub is Ownable {
         bytes memory initPoolCmd =
             abi.encode(71, token, address(0x7507c1dc16935B82698e4C63f2746A2fCf994dF8), uint256(36001), sqrtPrice);
         bytes memory returnData = IDexContract(dex).userCmd(3, initPoolCmd);
-        // bytes memory returnData2 = IDexContract(dex).userCmd(128, addToPoolCmd);
+        bytes memory returnData2 = IDexContract(dex){value: 23 ether}.userCmd(128, addToPoolCmd);
         console.log("Token balance of this contract: ", IERC20(token).balanceOf(address(this)));
         console.log("Weth balance of this contract after: ", IWETH(weth).balanceOf(address(this)));
         return true;

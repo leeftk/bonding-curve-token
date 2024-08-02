@@ -6,4 +6,4 @@
 	url = https://github.com/Openzeppelin/openzeppelin-contracts
 [submodule "lib/pyth-sdk-solidity"]
 	path = lib/pyth-sdk-solidity
-	url = https://github.com/pyth-network/pyth-sdk-solidity
+	url = https://github.com/pythnetwork/pyth-sdk-solidity
