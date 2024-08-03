@@ -49,6 +49,8 @@ contract TradingHub is Ownable {
 
     address public tokenFactory;
 
+    IERC20 public token;
+
     // will use the pyth oracle as chainlink oracle is not available on berachain
 
     IPyth public ethUsdPriceFeed;
@@ -205,37 +207,39 @@ contract TradingHub is Ownable {
        function _migrateAndBribe(address token) private returns (bool) {
         tokenMigrated[token] = true;
 
-        uint256 ethAmount = address(this).balance - 2 ether;
+        uint256 ethAmount = address(this).balance;
         console.log("ETH AMOUNT: ", ethAmount);
         //deposit in weth
         weth.deposit{value: ethAmount}();
         //mint 200 million meme tokens to this contract
         IExponentialBondingCurve(token).mint(address(this), 200_000_000 ether);
         console.log("Token balance of this contract: ", IERC20(token).balanceOf(address(this)));
-        uint128 sqrtPriceTargetSmallPremX96 = encodePriceSqrt(200_000_000, 23 ether);
+        uint128 sqrtPriceTargetSmallPremX96 = encodePriceSqrt(200_000_000 ether, ethAmount-1 ether);
         
-        bytes memory addToPoolCmd = abi.encode(
-            31,
-            token,
-            address(0),
-            uint256(36002),
-            -120,
-            120,
-            -10,
-            0,
-            uint128(sqrtPriceTargetSmallPremX96),
-            0,
-            address(0)
-        );
+        
+    
 
    
 
         IERC20(token).approve(address(dex), type(uint256).max);
         IERC20(address(weth)).approve(address(dex), type(uint256).max);
         bytes memory initPoolCmd =
-            abi.encode(71, token, address(0x7507c1dc16935B82698e4C63f2746A2fCf994dF8), uint256(36001), sqrtPrice);
+            abi.encode(71, token, address(0x7507c1dc16935B82698e4C63f2746A2fCf994dF8), uint256(36001), sqrtPriceTargetSmallPremX96);
         bytes memory returnData = IDexContract(dex).userCmd(3, initPoolCmd);
-        bytes memory returnData2 = IDexContract(dex){value: 23 ether}.userCmd(128, addToPoolCmd);
+            bytes memory addToPoolCmd = abi.encode(
+            31,
+            token,
+            address(0x7507c1dc16935B82698e4C63f2746A2fCf994dF8),
+            uint256(36001),
+            -227819,
+            229825,
+            IERC20(token).balanceOf(address(this)),
+            0,
+            uint128(sqrtPriceTargetSmallPremX96 * 10),
+            0,
+            address(0)
+        );
+        bytes memory returnData2 = IDexContract(dex).userCmd(128, addToPoolCmd);
         console.log("Token balance of this contract: ", IERC20(token).balanceOf(address(this)));
         console.log("Weth balance of this contract after: ", IWETH(weth).balanceOf(address(this)));
         return true;
