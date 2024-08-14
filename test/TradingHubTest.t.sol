@@ -154,6 +154,7 @@ contract TradingHubTestContract is Test {
         vm.expectRevert();
         tradingHub.sell(address(token), msg.sender, 10);
         vm.stopPrank();
+        
     }
 
     function testMigrationSuccessfull() external {

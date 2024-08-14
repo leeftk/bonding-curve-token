@@ -128,9 +128,6 @@ contract TradingHub is Ownable {
         // on migration check the total supply of the bancour bonding curve token
         // check how much are left till we reach the 800 million suppy
         // mint the remainning tokens
-        // add the liquidity to the pool
-             console.log("TOKEN CAP IS: ",tokenCap);
-            console.log("migrationEthValue is: ",migrationEthValue);
         if (tokenCap >= migrationEthValue && !tokenMigrated[token]) {
        
             // check the total supply of token
@@ -214,7 +211,7 @@ contract TradingHub is Ownable {
         //mint 200 million meme tokens to this contract
         IExponentialBondingCurve(token).mint(address(this), 200_000_000 ether);
         console.log("Token balance of this contract: ", IERC20(token).balanceOf(address(this)));
-        uint128 sqrtPriceTargetSmallPremX96 = encodePriceSqrt(200_000_000 ether, ethAmount-1 ether);
+        uint128 sqrtPriceTargetSmallPremX96 = encodePriceSqrt(200_000_000 ether, ethAmount - 1 ether);
         
         
     

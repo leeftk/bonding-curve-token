@@ -8,9 +8,12 @@ import "openzeppelin-contracts/interfaces/IERC20.sol";
 error NOT_ENOUGH_FEE_SENT();
 error TRANSFER_FAIL();
 
+
 // TODO: add a metadata option in the erc20 token implementation so it can be easily fetched into UI when a token is launched
 // TODO: remove the bondicurveContract and introduce a new contract called trading hub, all the tokens will moveinto the trading hub, trading hub exposes the trading functions that interact with the bondingcurve contract.
 contract TokenFactory is Ownable {
+
+    event NewMemeCreated(address indexed token, address indexed creator);
 
     // some reasonable fee around $2-3
     uint256 public feeInEth;
@@ -51,11 +54,11 @@ contract TokenFactory is Ownable {
         IERC20(newToken).transfer(tradingHub, IERC20(newToken).balanceOf(address(this)));
 
         tokenToCreator[address(newToken)] = msg.sender;
-
-        tokenToCreator[address(newToken)] = msg.sender;
-
+        // Emit the NewMemeCreated event
+        emit NewMemeCreated(address(newToken), msg.sender);
         // return the token address
         return address(newToken);
+
     }
 
     function withdrawFee() public onlyOwner {
