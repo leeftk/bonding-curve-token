@@ -34,6 +34,8 @@ contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
         _;
     }
 
+    
+
     function calculateCurvedMintReturn(uint256 _amount, address token)
         public
         onlyTradingHub
@@ -116,6 +118,32 @@ contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
             "Must send equal to or lower than maximum gas price to mitigate front running attacks."
         );
         _;
+    }
+
+
+        function transfer(address to, uint256 amount) public virtual override returns (bool) {
+        address owner = _msgSender();
+        
+        // Check if the token is migrated, unless the recipient is the trading hub
+        if (to != tradingHub) {
+            require(tradingHubContract.tokenMigrated(address(this)), "TOKEN_NOT_MIGRATED");
+        }
+        
+        _transfer(owner, to, amount);
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint256 amount) public virtual override returns (bool) {
+        address spender = _msgSender();
+        
+        // Check if the token is migrated, unless the recipient is the trading hub
+        if (to != tradingHub) {
+            require(tradingHubContract.tokenMigrated(address(this)), "TOKEN_NOT_MIGRATED");
+        }
+        
+        _spendAllowance(from, spender, amount);
+        _transfer(from, to, amount);
+        return true;
     }
 
     function setMaxGasPrice(uint256 newMax) public onlyOwner returns (bool) {
