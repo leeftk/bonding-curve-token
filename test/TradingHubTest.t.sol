@@ -7,13 +7,11 @@ import "../src/ExponentialBondingCurve.sol";
 import "../src/TradingHub.sol";
 import "../src/interfaces/IDexContract.sol";
 import "../src/TokenFactory.sol";
-import "@pythnetwork/pyth-sdk-solidity/MockPyth.sol";
 
 contract TradingHubTestContract is Test {
     ExponentialBondingCurve dex;
     TokenFactory tokenFactory;
     TradingHub tradingHub;
-    MockPyth pythAddress;
     address token;
     //mock address
     address alice = vm.addr(1);
@@ -25,9 +23,10 @@ contract TradingHubTestContract is Test {
     function setUp() public {
         vm.createSelectFork("https://bartio.rpc.berachain.com/"); // Fork Mainnet for Ambient Finance at the latest block
         //  vm.createSelectFork("https://eth-mainnet.g.alchemy.com/v2/miIScEoe9D6YBuuUrayW6tN7oecsWApe"); 
-        pythAddress = new MockPyth(block.timestamp, 1);
         tradingHub =
-            new TradingHub(25 ether, address(0xAB827b1Cc3535A9e549EE387A6E9C3F02F481B49), 200000000 ether);
+
+        // the second last argument is address of uniswap v2 router on base, last is bera chain id which is arbitrary
+            new TradingHub(25 ether, address(0xAB827b1Cc3535A9e549EE387A6E9C3F02F481B49), 200000000 ether, 0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24, 123456);
 
         //dex = new ExponentialBondingCurve(4, address(tradingHub), 1);
 
@@ -41,21 +40,8 @@ contract TradingHubTestContract is Test {
         deal(jose, 100 ether);
         deal(maria, 100 ether);
 
-        // this is universal logic
-        bytes32 id = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
-        int64 price = 3000e8;
-        uint64 conf = 1;
-        int32 expo = -8; // this is what mainnet has for it
-        int64 emaPrice = 1 ether;
-        uint64 emaConf = 1;
-        uint64 publishTime = uint64(block.timestamp);
-        uint64 prevPublishTime = uint64(block.timestamp - 1);
+        
 
-        priceUpdate[0] = pythAddress.createPriceFeedUpdateData(
-            id, price, conf, expo, emaPrice, emaConf, publishTime
-        );
-        uint256 requiredFee = pythAddress.getUpdateFee(priceUpdate);
-        pythAddress.updatePriceFeeds{value: requiredFee}(priceUpdate);
     }
 
     function testUserBuy() public {
@@ -91,12 +77,6 @@ contract TradingHubTestContract is Test {
     function testSellNotEnoughAmountOut() public {
         vm.expectRevert();
         tradingHub.sell(token, address(this), 1000);
-    }
-
-    function testSetAndGetPriceFeed() public {
-        address newPriceFeed = address(0x456);
-        tradingHub.setEthUsdPriceFeed(newPriceFeed);
-        assertEq(tradingHub.getEthUsdPriceFeed(), newPriceFeed);
     }
 
     function testUserSellOnce() external {

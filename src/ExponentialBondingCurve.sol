@@ -9,9 +9,14 @@ import "forge-std/console.sol";
 
 error NOT_TRADING_HUB();
 
+// Interface for TradingHub to access tokenMigrated mapping
+interface ITradingHub {
+    function tokenMigrated(address token) external view returns (bool);
+}
+
 contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
     uint256 public reserveRatio;
-    address public tradingHub;
+    ITradingHub public tradingHub;
     uint256 public maxGasPrice;
     uint256 public poolBalance = 1;
 
@@ -24,11 +29,11 @@ contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
     ) ERC20(name, symbol) Ownable(msg.sender) {
         reserveRatio = _reserveRatio;
         maxGasPrice = newMaxGasPrice;
-        tradingHub = _tradingHub;
+        tradingHub = ITradingHub(_tradingHub);
     }
 
     modifier onlyTradingHub() {
-        if (msg.sender != tradingHub) {
+        if (msg.sender != address(tradingHub)) {
             revert NOT_TRADING_HUB();
         }
         _;
@@ -125,8 +130,8 @@ contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
         address owner = _msgSender();
         
         // Check if the token is migrated, unless the recipient is the trading hub
-        if (to != tradingHub) {
-            require(tradingHubContract.tokenMigrated(address(this)), "TOKEN_NOT_MIGRATED");
+        if (to != address(tradingHub)) {
+            require(ITradingHub(tradingHub).tokenMigrated(address(this)), "TOKEN_NOT_MIGRATED");
         }
         
         _transfer(owner, to, amount);
@@ -137,8 +142,8 @@ contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
         address spender = _msgSender();
         
         // Check if the token is migrated, unless the recipient is the trading hub
-        if (to != tradingHub) {
-            require(tradingHubContract.tokenMigrated(address(this)), "TOKEN_NOT_MIGRATED");
+        if (to != address(tradingHub)) {
+            require(ITradingHub(tradingHub).tokenMigrated(address(this)), "TOKEN_NOT_MIGRATED");
         }
         
         _spendAllowance(from, spender, amount);
@@ -156,7 +161,7 @@ contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
     }
 
     function setTradingHub(address newTradingHub) public onlyOwner returns (bool) {
-        tradingHub = newTradingHub;
+        tradingHub = ITradingHub(newTradingHub);
         return true;
     }
 }

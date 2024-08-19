@@ -39,10 +39,7 @@ interface IWETH {
     function withdraw(uint256 wad) external;
 }
 
-// Interface for TradingHub to access tokenMigrated mapping
-interface ITradingHub {
-    function tokenMigrated(address token) external view returns (bool);
-}
+
 
 contract TradingHub is Ownable {
     // this contract does following
@@ -58,7 +55,6 @@ contract TradingHub is Ownable {
 
     // will use the pyth oracle as chainlink oracle is not available on berachain
 
-    IPyth public ethUsdPriceFeed;
     IWETH weth;
 
     // bera chain id
@@ -77,11 +73,13 @@ contract TradingHub is Ownable {
     uint256 private constant ETH_RESERVE = 0.2 ether;
     uint256 private constant TOKEN_RESERVE = 200_000_000 * 1e18;
 
+    IUniswapV2Router02 uniswapRouter;
+
     constructor(uint256 _migrationEthValue, address dexAddress, uint256 _liquidityAmountForDex, address _uniswapRouter, uint256 _beraChainId) Ownable(msg.sender) {
         migrationEthValue = _migrationEthValue;
         dex = IDexContract(dexAddress);
                 uniswapRouter = IUniswapV2Router02(_uniswapRouter);
-                        WETH = uniswapRouter.WETH();
+                        weth = IWETH(uniswapRouter.WETH());
                         beraChainId = _beraChainId;
 
 
@@ -165,7 +163,7 @@ contract TradingHub is Ownable {
             }
             else
             {
-                migrate = _migrateUniswap(token);
+                migrated = _migrateUniswap(token);
             }
         }
 
@@ -275,15 +273,15 @@ contract TradingHub is Ownable {
         
         // Approve Uniswap router to spend tokens and WETH
         IERC20(token).approve(address(uniswapRouter), type(uint256).max);
-        IERC20(WETH).approve(address(uniswapRouter), type(uint256).max);
+        IWETH(weth).approve(address(uniswapRouter), type(uint256).max);
         
         // Wrap ETH to WETH
-        IWETH(WETH).deposit{value: ethAmount}();
+        IWETH(weth).deposit{value: ethAmount}();
         
         // Add liquidity to Uniswap
         uniswapRouter.addLiquidity(
             token,
-            WETH,
+            address(weth),
             200_000_000 ether,
             ethAmount,
             0, // Accept any amount of tokens
@@ -303,13 +301,6 @@ contract TradingHub is Ownable {
         return tokenFactory;
     }
 
-    function setEthUsdPriceFeed(address newEthUsdPriceFeed) public onlyOwner {
-        ethUsdPriceFeed = IPyth(newEthUsdPriceFeed);
-    }
-
-    function getEthUsdPriceFeed() public view returns (address) {
-        return address(ethUsdPriceFeed);
-    }
 
     function setliquidityAmountForDex(uint256 _liquidityAmountForDex) public onlyOwner {
         liquidityAmountForDex = _liquidityAmountForDex;
