@@ -5,8 +5,6 @@ import {Ownable} from "openzeppelin-contracts/access/Ownable.sol";
 import "openzeppelin-contracts/interfaces/IERC20.sol";
 import "./interfaces/IExponentialBondingCurve.sol";
 import "./interfaces/ITokenFactory.sol";
-import "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
-import "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 import "forge-std/console.sol";
 import "./interfaces/IDexContract.sol";
 import "./Math/SqrtMath.sol";
