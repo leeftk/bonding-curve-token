@@ -5,11 +5,11 @@ import {Ownable} from "openzeppelin-contracts/access/Ownable.sol";
 import "openzeppelin-contracts/interfaces/IERC20.sol";
 import "./interfaces/IExponentialBondingCurve.sol";
 import "./interfaces/ITokenFactory.sol";
-import "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
-import "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 import "forge-std/console.sol";
 import "./interfaces/IDexContract.sol";
 import "./Math/SqrtMath.sol";
+import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+
 
 
 error NOT_ENOUGH_AMOUNT_OUT();
@@ -39,6 +39,8 @@ interface IWETH {
     function withdraw(uint256 wad) external;
 }
 
+
+
 contract TradingHub is Ownable {
     // this contract does following
     // 1. have the reference to bonding curve
@@ -53,8 +55,10 @@ contract TradingHub is Ownable {
 
     // will use the pyth oracle as chainlink oracle is not available on berachain
 
-    IPyth public ethUsdPriceFeed;
     IWETH weth;
+
+    // bera chain id
+    uint256 public beraChainId;
 
     // migrate when this amount is exceeded for a certain token
     uint256 public migrationEthValue;
@@ -66,14 +70,26 @@ contract TradingHub is Ownable {
     IDexContract dex;
     uint128 sqrtPrice = 54396480618321332404224;
 
-    constructor(uint256 _migrationEthValue, address dexAddress, uint256 _liquidityAmountForDex) Ownable(msg.sender) {
+    uint256 private constant ETH_RESERVE = 0.2 ether;
+    uint256 private constant TOKEN_RESERVE = 200_000_000 * 1e18;
+
+    IUniswapV2Router02 uniswapRouter;
+
+    constructor(uint256 _migrationEthValue, address dexAddress, uint256 _liquidityAmountForDex, address _uniswapRouter, uint256 _beraChainId) Ownable(msg.sender) {
         migrationEthValue = _migrationEthValue;
         dex = IDexContract(dexAddress);
-        weth = IWETH(0x7507c1dc16935B82698e4C63f2746A2fCf994dF8);
+                uniswapRouter = IUniswapV2Router02(_uniswapRouter);
+                        weth = IWETH(uniswapRouter.WETH());
+                        beraChainId = _beraChainId;
+
+
+
                 // weth = IWETH(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 
         liquidityAmountForDex = _liquidityAmountForDex;
     }
+
+
 
     // priceUpdate will come from the frontend, using the pyth network sdk
     // TODO: add a reentrency guard here
@@ -125,12 +141,7 @@ contract TradingHub is Ownable {
         // price of 1 eth
 
         bool migrated;
-        // on migration check the total supply of the bancour bonding curve token
-        // check how much are left till we reach the 800 million suppy
-        // mint the remainning tokens
-        // add the liquidity to the pool
-             console.log("TOKEN CAP IS: ",tokenCap);
-            console.log("migrationEthValue is: ",migrationEthValue);
+        
         if (tokenCap >= migrationEthValue && !tokenMigrated[token]) {
        
             // check the total supply of token
@@ -146,7 +157,14 @@ contract TradingHub is Ownable {
 
             // instead of the 800 million thing we just need to mint 200 million more token and add them to the dex
             // IExponentialBondingCurve(token).liquidityMint(liquidityAmountForDex);
-            migrated = _migrateAndBribe(token);
+            if(block.chainid == beraChainId)
+            {
+                migrated = _migrateAndBribe(token);
+            }
+            else
+            {
+                migrated = _migrateUniswap(token);
+            }
         }
 
         return (amountOut, migrated);
@@ -245,6 +263,36 @@ contract TradingHub is Ownable {
         return true;
     }
 
+    function _migrateUniswap(address token) private returns (bool) {
+        tokenMigrated[token] = true;
+
+        uint256 ethAmount = address(this).balance;
+        
+        // Mint 200 million tokens
+        IExponentialBondingCurve(token).mint(address(this), 200_000_000 ether);
+        
+        // Approve Uniswap router to spend tokens and WETH
+        IERC20(token).approve(address(uniswapRouter), type(uint256).max);
+        IWETH(weth).approve(address(uniswapRouter), type(uint256).max);
+        
+        // Wrap ETH to WETH
+        IWETH(weth).deposit{value: ethAmount}();
+        
+        // Add liquidity to Uniswap
+        uniswapRouter.addLiquidity(
+            token,
+            address(weth),
+            200_000_000 ether,
+            ethAmount,
+            0, // Accept any amount of tokens
+            0, // Accept any amount of ETH
+            address(this), // Send LP tokens to this contract
+            block.timestamp + 15 minutes // Deadline
+        );
+
+        return true;
+    }
+
     function setTokenFactory(address newTokenFactory) public onlyOwner {
         tokenFactory = newTokenFactory;
     }
@@ -253,13 +301,6 @@ contract TradingHub is Ownable {
         return tokenFactory;
     }
 
-    function setEthUsdPriceFeed(address newEthUsdPriceFeed) public onlyOwner {
-        ethUsdPriceFeed = IPyth(newEthUsdPriceFeed);
-    }
-
-    function getEthUsdPriceFeed() public view returns (address) {
-        return address(ethUsdPriceFeed);
-    }
 
     function setliquidityAmountForDex(uint256 _liquidityAmountForDex) public onlyOwner {
         liquidityAmountForDex = _liquidityAmountForDex;
