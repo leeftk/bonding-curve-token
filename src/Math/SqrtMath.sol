@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL2.0
 pragma solidity ^0.8.13;
 
-uint256 constant Q64_64_PRECISION = 2**64;
+uint256 constant Q64_64_PRECISION = 2 ** 64;
 
 // Computes the sqrt of the u64x64 fixed point price given the AMM reserves
 function encodePriceSqrt(uint256 reserve1, uint256 reserve0) pure returns (uint128) {
@@ -61,8 +61,6 @@ function sqrt(uint256 x) pure returns (uint256 z) {
         let zRoundDown := div(x, z)
 
         // If zRoundDown is smaller, use it.
-        if lt(zRoundDown, z) {
-            z := zRoundDown
-        }
+        if lt(zRoundDown, z) { z := zRoundDown }
     }
 }

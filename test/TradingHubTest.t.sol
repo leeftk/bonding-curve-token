@@ -22,11 +22,16 @@ contract TradingHubTestContract is Test {
 
     function setUp() public {
         vm.createSelectFork("https://bartio.rpc.berachain.com/"); // Fork Mainnet for Ambient Finance at the latest block
-        //  vm.createSelectFork("https://eth-mainnet.g.alchemy.com/v2/miIScEoe9D6YBuuUrayW6tN7oecsWApe"); 
+        //  vm.createSelectFork("https://eth-mainnet.g.alchemy.com/v2/miIScEoe9D6YBuuUrayW6tN7oecsWApe");
         tradingHub =
-
         // the second last argument is address of uniswap v2 router on base, last is bera chain id which is arbitrary
-            new TradingHub(25 ether, address(0xAB827b1Cc3535A9e549EE387A6E9C3F02F481B49), 200000000 ether, 0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24, 123456);
+        new TradingHub(
+            25 ether,
+            address(0xAB827b1Cc3535A9e549EE387A6E9C3F02F481B49),
+            200000000 ether,
+            0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24,
+            123456
+        );
 
         //dex = new ExponentialBondingCurve(4, address(tradingHub), 1);
 
@@ -39,9 +44,6 @@ contract TradingHubTestContract is Test {
         deal(bob, 100 ether);
         deal(jose, 100 ether);
         deal(maria, 100 ether);
-
-        
-
     }
 
     function testUserBuy() public {
@@ -191,7 +193,6 @@ contract TradingHubTestContract is Test {
 
         (uint256 amount, bool migrated) = tradingHub.buy{value: 40 ether}(address(token), 0, address(this));
     }
-
 
     receive() external payable {}
 }

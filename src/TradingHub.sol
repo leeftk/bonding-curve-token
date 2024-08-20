@@ -10,8 +10,6 @@ import "./interfaces/IDexContract.sol";
 import "./Math/SqrtMath.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 
-
-
 error NOT_ENOUGH_AMOUNT_OUT();
 error NOT_ENOUGH_BALANCE_IN_CONTRACT();
 error INVALID_ARGS();
@@ -20,12 +18,14 @@ error WTF_IS_THIS_TOKEN();
 error AMOUNT_SHOULD_BE_GREATRE_THAN_RESERVE_RATIO();
 error AMOUNT_GREATER_THAN_CAP();
 error REFUND_FAILED();
+error TOKEN_MIGRATED();
 
 interface IWETH {
     event Approval(address indexed src, address indexed guy, uint256 wad);
     event Deposit(address indexed dst, uint256 wad);
     event Transfer(address indexed src, address indexed dst, uint256 wad);
     event Withdrawal(address indexed src, uint256 wad);
+
     function allowance(address, address) external view returns (uint256);
     function approve(address guy, uint256 wad) external returns (bool);
     function balanceOf(address) external view returns (uint256);
@@ -39,8 +39,6 @@ interface IWETH {
     function withdraw(uint256 wad) external;
 }
 
-
-
 contract TradingHub is Ownable {
     // this contract does following
     // 1. have the reference to bonding curve
@@ -50,15 +48,12 @@ contract TradingHub is Ownable {
     // TODO:add the fee mechanism here
 
     address public tokenFactory;
-
     IERC20 public token;
-
-    // will use the pyth oracle as chainlink oracle is not available on berachain
-
     IWETH weth;
-
-    // bera chain id
-    uint256 public beraChainId;
+    //mapping of chain id to string name
+    mapping(string name => uint256 chainId) public chainIds;
+  
+    
 
     // migrate when this amount is exceeded for a certain token
     uint256 public migrationEthValue;
@@ -68,60 +63,51 @@ contract TradingHub is Ownable {
     mapping(address token => bool migrated) public tokenMigrated;
 
     IDexContract dex;
-    uint128 sqrtPrice = 54396480618321332404224;
-
-    uint256 private constant ETH_RESERVE = 0.2 ether;
-    uint256 private constant TOKEN_RESERVE = 200_000_000 * 1e18;
-
     IUniswapV2Router02 uniswapRouter;
 
-    constructor(uint256 _migrationEthValue, address dexAddress, uint256 _liquidityAmountForDex, address _uniswapRouter, uint256 _beraChainId) Ownable(msg.sender) {
+
+    uint256 private constant ETH_RESERVE = 2 * 1e17;
+    uint256 private constant TOKEN_RESERVE = 200_000_000 * 1e18;
+
+    
+
+    constructor(
+        uint256 _migrationEthValue,
+        uint256 _liquidityAmountForDex
+    ) Ownable(msg.sender) {
         migrationEthValue = _migrationEthValue;
-        dex = IDexContract(dexAddress);
-                uniswapRouter = IUniswapV2Router02(_uniswapRouter);
-                        weth = IWETH(uniswapRouter.WETH());
-                        beraChainId = _beraChainId;
 
-
-
-                // weth = IWETH(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+        
+        weth = IWETH(uniswapRouter.WETH());
 
         liquidityAmountForDex = _liquidityAmountForDex;
     }
 
-
-
     // priceUpdate will come from the frontend, using the pyth network sdk
     // TODO: add a reentrency guard here
-    function buy(address token, uint256 minimumAmountOut, address receiver)
-        public
-        payable
-        returns (uint256, bool)
-    {
+    function buy(address token, uint256 minimumAmountOut, address receiver) public payable returns (uint256, bool) {
         uint256 amountIn = msg.value;
 
         // if the token have been migrated no trading can happen in bonding curve
-        require(!tokenMigrated[token], "already migrated, trading have stopped");
+        if (tokenMigrated[token]) revert TOKEN_MIGRATED();
+        if (ITokenFactory(tokenFactory).tokenToCreator(token) == address(0)) {
+            revert WTF_IS_THIS_TOKEN();
+        }
+        if (address(token) == address(0) || receiver == address(0)) {
+            revert INVALID_ARGS();
+        }
         // add a check if the sent in eth value crosses the market cap only mint for the value of eth remainning and refund the remainning value
-        if(amountIn + tokenMarketCap[token] > migrationEthValue)
-        {
+        if (amountIn + tokenMarketCap[token] > migrationEthValue) {
             // just allow enough that it becomes 25
             amountIn = migrationEthValue - tokenMarketCap[token];
 
             // refund msg.value - amountIn
             (bool success,) = address(msg.sender).call{value: msg.value - amountIn}("");
-            if(!success)
-            {
+            if (!success) {
                 revert REFUND_FAILED();
             }
         }
-        if (ITokenFactory(tokenFactory).tokenToCreator(token) == address(0)) {
-            revert WTF_IS_THIS_TOKEN();
-        }
-
-        if (address(token) == address(0) || receiver == address(0)) {
-            revert INVALID_ARGS();
-        }
+        
 
         // call the relevant function on the bonding curve
         uint256 amountOut = IExponentialBondingCurve(token).curvedMint(amountIn, token);
@@ -135,15 +121,13 @@ contract TradingHub is Ownable {
 
         uint256 tokenCap = tokenMarketCap[token];
         tokenCap = tokenCap + amountIn;
-
         tokenMarketCap[token] = tokenCap;
 
         // price of 1 eth
 
         bool migrated;
-        
+
         if (tokenCap >= migrationEthValue && !tokenMigrated[token]) {
-       
             // check the total supply of token
             uint256 tokenTotalSupply = IERC20(token).totalSupply();
 
@@ -157,12 +141,9 @@ contract TradingHub is Ownable {
 
             // instead of the 800 million thing we just need to mint 200 million more token and add them to the dex
             // IExponentialBondingCurve(token).liquidityMint(liquidityAmountForDex);
-            if(block.chainid == beraChainId)
-            {
+            if (block.chainid == chainIds["BERA"]) {
                 migrated = _migrateAndBribe(token);
-            }
-            else
-            {
+            } else {
                 migrated = _migrateUniswap(token);
             }
         }
@@ -205,12 +186,8 @@ contract TradingHub is Ownable {
             amountOut = tokenCap;
         }
 
-    
-
         // ok so selling should decrease the cap by amountOut
         tokenMarketCap[token] = tokenCap - amountOut;
-
-        
 
         // this risks all other bonding curve tokens too
         console.log("ETHER BALANCE: ", address(this).balance);
@@ -222,29 +199,23 @@ contract TradingHub is Ownable {
     }
 
     // this migraate 8k to ambiant dex, 4k to bribe the validators and rest remains in the bonding curve
-       function _migrateAndBribe(address token) private returns (bool) {
+    function _migrateAndBribe(address token) private returns (bool) {
         tokenMigrated[token] = true;
 
         uint256 ethAmount = address(this).balance;
-        console.log("ETH AMOUNT: ", ethAmount);
         //deposit in weth
         weth.deposit{value: ethAmount}();
         //mint 200 million meme tokens to this contract
         IExponentialBondingCurve(token).mint(address(this), 200_000_000 ether);
-        console.log("Token balance of this contract: ", IERC20(token).balanceOf(address(this)));
-        uint128 sqrtPriceTargetSmallPremX96 = encodePriceSqrt(200_000_000 ether, ethAmount-1 ether);
-        
-        
-    
-
-   
+        uint128 sqrtPriceTargetSmallPremX96 = encodePriceSqrt(200_000_000 ether, ethAmount - 1 ether);
 
         IERC20(token).approve(address(dex), type(uint256).max);
         IERC20(address(weth)).approve(address(dex), type(uint256).max);
-        bytes memory initPoolCmd =
-            abi.encode(71, token, address(0x7507c1dc16935B82698e4C63f2746A2fCf994dF8), uint256(36001), sqrtPriceTargetSmallPremX96);
+        bytes memory initPoolCmd = abi.encode(
+            71, token, address(0x7507c1dc16935B82698e4C63f2746A2fCf994dF8), uint256(36001), sqrtPriceTargetSmallPremX96
+        );
         bytes memory returnData = IDexContract(dex).userCmd(3, initPoolCmd);
-            bytes memory addToPoolCmd = abi.encode(
+        bytes memory addToPoolCmd = abi.encode(
             31,
             token,
             address(0x7507c1dc16935B82698e4C63f2746A2fCf994dF8),
@@ -258,8 +229,6 @@ contract TradingHub is Ownable {
             address(0)
         );
         bytes memory returnData2 = IDexContract(dex).userCmd(128, addToPoolCmd);
-        console.log("Token balance of this contract: ", IERC20(token).balanceOf(address(this)));
-        console.log("Weth balance of this contract after: ", IWETH(weth).balanceOf(address(this)));
         return true;
     }
 
@@ -267,17 +236,17 @@ contract TradingHub is Ownable {
         tokenMigrated[token] = true;
 
         uint256 ethAmount = address(this).balance;
-        
+
         // Mint 200 million tokens
         IExponentialBondingCurve(token).mint(address(this), 200_000_000 ether);
-        
+
         // Approve Uniswap router to spend tokens and WETH
         IERC20(token).approve(address(uniswapRouter), type(uint256).max);
         IWETH(weth).approve(address(uniswapRouter), type(uint256).max);
-        
+
         // Wrap ETH to WETH
         IWETH(weth).deposit{value: ethAmount}();
-        
+
         // Add liquidity to Uniswap
         uniswapRouter.addLiquidity(
             token,
@@ -293,6 +262,19 @@ contract TradingHub is Ownable {
         return true;
     }
 
+    function setChainId(string name, uint256 chainId) public onlyOwner {
+        if(!chainIds[_chainID] == address(0)) {
+            revert CHAIN_EXISTS();
+        }
+        chainIds[chainId] = name;
+       
+    }
+    function setUniswapRouterAddress(address _uniswap) public onlyOwner{
+        uniswapRouter = IUniswapV2Router02(_uniswapRouter);
+    }
+    function setIDexRoutherAddress(address _dexAddress) public onlyOwner{
+     dex = IDexContract(_dexAddress);
+    }
     function setTokenFactory(address newTokenFactory) public onlyOwner {
         tokenFactory = newTokenFactory;
     }
@@ -301,13 +283,11 @@ contract TradingHub is Ownable {
         return tokenFactory;
     }
 
-
     function setliquidityAmountForDex(uint256 _liquidityAmountForDex) public onlyOwner {
         liquidityAmountForDex = _liquidityAmountForDex;
     }
 
-    function getliquidityAmountForDex() public view returns(uint256)
-    {
+    function getliquidityAmountForDex() public view returns (uint256) {
         return liquidityAmountForDex;
     }
 
