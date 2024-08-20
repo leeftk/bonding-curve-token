@@ -50,18 +50,21 @@ contract TradingHub is Ownable {
     address public tokenFactory;
 
     IERC20 public token;
-
-    // will use the pyth oracle as chainlink oracle is not available on berachain
-
-    IPyth public ethUsdPriceFeed;
     IWETH weth;
 
     // migrate when this amount is exceeded for a certain token
     uint256 public migrationEthValue;
     uint256 public liquidityAmountForDex;
+    //build a token struct instead of using two mappings
+    // token => current market cap in eth
+    struct Token {
+        uint256 currentMarketCapEther;
+        bool migrated;
+    }
 
-    mapping(address token => uint256 currentMarketCapEther) public tokenMarketCap;
-    mapping(address token => bool migrated) public tokenMigrated;
+    mapping(address token => Token) public tokenData;
+    // mapping(address token => uint256 currentMarketCapEther) public tokenMarketCap;
+    // mapping(address token => bool migrated) public tokenMigrated;
 
     IDexContract dex;
     uint128 sqrtPrice = 54396480618321332404224;

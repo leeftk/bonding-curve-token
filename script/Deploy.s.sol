@@ -32,7 +32,7 @@ contract DeployScript is Script {
         tradingHub.buy{value: .01 ether}(token, 0, address(0x1B382A7b4496F14e0AAA2DA1E1626Da400426A03));
         ERC20(token).approve(address(tradingHub), type(uint256).max);
         console.log("balance of token: %s", ERC20(token).balanceOf(address(this)));
-        tradingHub.sell(token, address(this), 250001);
+        tradingHub.sell(token, address(0x1B382A7b4496F14e0AAA2DA1E1626Da400426A03), 250001);
         console.log("balance of token: %s", ERC20(token).balanceOf(address(this)));
 
         // Stop the script
