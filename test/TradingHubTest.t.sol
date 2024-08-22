@@ -196,9 +196,9 @@ contract TradingHubTestContract is Test {
     function testMigratAndBribe() public {
         // First, perform a buy operation
 
-        vm.deal(0x1A1da7Be44D477a887341Dc3EBC09A45798c7752, 10000000 ether);
+        //vm.deal(0x1A1da7Be44D477a887341Dc3EBC09A45798c7752, 10000000 ether);
 
-        (uint256 amountOut,) = tradingHub.buy{value: 20 ether}(token, 1000, address(this));
+        (uint256 amountOut,) = tradingHub.buy{value: 10 ether}(token, 1000, address(this));
         //check balance of user
         //assertEq(ERC20(token).balanceOf(address(this)), 3999971014888);
         console.log("addres this", address(this));
