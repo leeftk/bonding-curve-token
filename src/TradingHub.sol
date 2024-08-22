@@ -233,7 +233,7 @@ contract TradingHub is Ownable {
             uint256(36001),
             -227819,
             229825,
-            IERC20(token).balanceOf(address(this)),
+            1,
             0,
             uint128(sqrtPriceTargetSmallPremX96 * 10),
             0,
