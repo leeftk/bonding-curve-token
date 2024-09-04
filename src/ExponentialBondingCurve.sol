@@ -130,10 +130,9 @@ contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
         address owner = _msgSender();
         
         // Check if the token is migrated, unless the recipient is the trading hub
-        if (to != address(tradingHub)) {
-            require(ITradingHub(tradingHub).tokenMigrated(address(this)), "TOKEN_NOT_MIGRATED");
+        if (owner != address(tradingHub)) {
+            require(to == address(tradingHub) || ITradingHub(tradingHub).tokenMigrated(address(this)), "TOKEN_NOT_MIGRATED");
         }
-        
         _transfer(owner, to, amount);
         return true;
     }
@@ -142,7 +141,7 @@ contract ExponentialBondingCurve is BancorFormula, Ownable, ERC20 {
         address spender = _msgSender();
         
         // Check if the token is migrated, unless the recipient is the trading hub
-        if (to != address(tradingHub)) {
+        if (from != address(tradingHub)) {
             require(ITradingHub(tradingHub).tokenMigrated(address(this)), "TOKEN_NOT_MIGRATED");
         }
         

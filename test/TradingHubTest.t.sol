@@ -21,27 +21,35 @@ contract TradingHubTestContract is Test {
     bytes[] priceUpdate = new bytes[](1);
 
     function setUp() public {
-        vm.createSelectFork("https://bartio.rpc.berachain.com/"); // Fork Mainnet for Ambient Finance at the latest block
-        //  vm.createSelectFork("https://eth-mainnet.g.alchemy.com/v2/miIScEoe9D6YBuuUrayW6tN7oecsWApe"); 
-        tradingHub =
+        vm.createSelectFork("https://eth-mainnet.g.alchemy.com/v2/miIScEoe9D6YBuuUrayW6tN7oecsWApe");
+        // require(vm.activeFork() != 0, "Fork failed");
 
-        // the second last argument is address of uniswap v2 router on base, last is bera chain id which is arbitrary
-            new TradingHub(25 ether, address(0xAB827b1Cc3535A9e549EE387A6E9C3F02F481B49), 200000000 ether, 0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24, 123456);
+        // Use the correct WETH address for Ethereum mainnet
+        address router = 0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24;
+        address weth = 0x4200000000000000000000000000000000000006;
 
-        //dex = new ExponentialBondingCurve(4, address(tradingHub), 1);
+        // Create TradingHub with correct WETH address
+        tradingHub = new TradingHub(
+            25 ether,
+            address(0xAB827b1Cc3535A9e549EE387A6E9C3F02F481B49),
+            200000000 ether,
+            router,
+            69,// Use 1 for Ethereum mainnet chain ID
+            weth
+        );
 
-        // the reserve ratio 1000000 represents 100% and set it as  100000 here which is 10%
+        // Create TokenFactory
         tokenFactory = new TokenFactory(0.01 ether, address(tradingHub), 250000, 10000);
         tradingHub.setTokenFactory(address(tokenFactory));
+
+        // Create a new token
         token = tokenFactory.createNewMeme{value: 0.05 ether}("New token", "NTN");
-        //deal alice and bob eth
+
+        // Deal ETH to test addresses
         deal(alice, 100 ether);
         deal(bob, 100 ether);
         deal(jose, 100 ether);
         deal(maria, 100 ether);
-
-        
-
     }
 
     function testUserBuy() public {
@@ -192,6 +200,19 @@ contract TradingHubTestContract is Test {
         (uint256 amount, bool migrated) = tradingHub.buy{value: 40 ether}(address(token), 0, address(this));
     }
 
+    function testTransferRestrictionAfterMigration() public {
+        // Buy tokens for alice and bob
+        vm.prank(alice);
+        tradingHub.buy{value: 1 ether}(address(token), 0, alice);
+        
+        // Log Alice's initial balance
+        console.log("Alice's initial balance:", ERC20(token).balanceOf(alice));
+
+        // Attempt transfer after migration
+        vm.prank(alice);
+        vm.expectRevert("TOKEN_NOT_MIGRATED");
+        ERC20(token).transfer(bob, 100);
+  }
 
     receive() external payable {}
 }

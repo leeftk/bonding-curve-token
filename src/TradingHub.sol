@@ -75,11 +75,11 @@ contract TradingHub is Ownable {
 
     IUniswapV2Router02 uniswapRouter;
 
-    constructor(uint256 _migrationEthValue, address dexAddress, uint256 _liquidityAmountForDex, address _uniswapRouter, uint256 _beraChainId) Ownable(msg.sender) {
+    constructor(uint256 _migrationEthValue, address dexAddress, uint256 _liquidityAmountForDex, address _uniswapRouter, uint256 _beraChainId, address _weth) Ownable(msg.sender){
         migrationEthValue = _migrationEthValue;
         dex = IDexContract(dexAddress);
                 uniswapRouter = IUniswapV2Router02(_uniswapRouter);
-                        weth = IWETH(uniswapRouter.WETH());
+                        weth = IWETH(_weth);
                         beraChainId = _beraChainId;
 
 
